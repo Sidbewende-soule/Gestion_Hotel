@@ -24,9 +24,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
+/**
+ * Contrôleur pour la gestion des factures (GestionFactures.fxml).
+ * Gère la consultation, le filtrage, et l'enregistrement des paiements.
+ */
 public class GestionFacturesController implements Initializable {
 
-    // ── FXML ─────────────────────────────────────────────────────────────────
+    // --- Composants de la Table ---
     @FXML
     private TableView<Facture> tableFactures;
     @FXML
@@ -44,17 +48,19 @@ public class GestionFacturesController implements Initializable {
     @FXML
     private TableColumn<Facture, Void> colActionsFacture;
 
+    // --- Filtres et Résumé ---
     @FXML
     private ComboBox<String> comboFiltreStatut;
     @FXML
-    private Label lblTotalFacture;
+    private Label lblTotalFacture; // Somme de toutes les factures affichées
     @FXML
-    private Label lblTotalEncaisse;
+    private Label lblTotalEncaisse; // Somme des paiements perçus
     @FXML
-    private Label lblResteAPayer;
+    private Label lblResteAPayer; // Différence (créance)
     @FXML
-    private Label lblStatut;
+    private Label lblStatut; // Feedback utilisateur
 
+    // --- Panneau de Détails (à droite) ---
     @FXML
     private VBox panneauDetail;
     @FXML
@@ -70,20 +76,19 @@ public class GestionFacturesController implements Initializable {
     @FXML
     private Label lblDetailRestant;
     @FXML
-    private ListView<String> listPaiements;
+    private ListView<String> listPaiements; // Liste chronologique des versements
 
-    // ── DAOs ──────────────────────────────────────────────────────────────────
+    // --- DAOs ---
     private final FactureDAO factureDAO = new FactureDAO();
     private final PaiementDAO paiementDAO = new PaiementDAO();
 
-    // ── État ──────────────────────────────────────────────────────────────────
+    // --- Données ---
     private ObservableList<Facture> listeFactures = FXCollections.observableArrayList();
     private Facture factureSelectionnee;
 
-    // ════════════════════════════════════════════════════════════════════════
-    // Initialisation
-    // ════════════════════════════════════════════════════════════════════════
-
+    /**
+     * Initialisation de la vue.
+     */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         configurerColonnes();
@@ -91,19 +96,22 @@ public class GestionFacturesController implements Initializable {
         chargerFactures();
     }
 
+    /**
+     * Configure le rendu des colonnes (formatage monétaire, couleurs de statut).
+     */
     private void configurerColonnes() {
         colIdFacture.setCellValueFactory(new PropertyValueFactory<>("idFacture"));
         colDateEmission.setCellValueFactory(new PropertyValueFactory<>("dateEmission"));
         colMontantTotal.setCellValueFactory(new PropertyValueFactory<>("montantTotal"));
         colStatut.setCellValueFactory(new PropertyValueFactory<>("statutPaiement"));
 
-        // Colonnes transientes (issus de JOIN)
+        // Liaison avec les attributs transients calculés via les JOIN SQL
         colClient.setCellValueFactory(
                 data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getNomClient()));
         colChambre.setCellValueFactory(
                 data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getNumerosChambre()));
 
-        // Colorer la colonne Statut
+        // Application de couleurs contextuelles sur le statut
         colStatut.setCellFactory(col -> new TableCell<>() {
             @Override
             protected void updateItem(String item, boolean empty) {
@@ -115,15 +123,15 @@ public class GestionFacturesController implements Initializable {
                 }
                 setText(item);
                 switch (item) {
-                    case "PAYE" -> setStyle("-fx-text-fill: #2E7D32; -fx-font-weight: bold;");
-                    case "PARTIEL" -> setStyle("-fx-text-fill: #E65100; -fx-font-weight: bold;");
-                    case "NON_PAYE" -> setStyle("-fx-text-fill: #B71C1C; -fx-font-weight: bold;");
+                    case "PAYE" -> setStyle("-fx-text-fill: #2E7D32; -fx-font-weight: bold;"); // Vert
+                    case "PARTIEL" -> setStyle("-fx-text-fill: #E65100; -fx-font-weight: bold;"); // Orange
+                    case "NON_PAYE" -> setStyle("-fx-text-fill: #B71C1C; -fx-font-weight: bold;"); // Rouge
                     default -> setStyle("");
                 }
             }
         });
 
-        // Formater le montant en FCFA
+        // Formatage du montant en devise locale (FCFA)
         colMontantTotal.setCellFactory(col -> new TableCell<>() {
             @Override
             protected void updateItem(Double item, boolean empty) {
@@ -132,7 +140,7 @@ public class GestionFacturesController implements Initializable {
             }
         });
 
-        // Colonne Actions
+        // Définition des boutons d'action (Payer, Modifier, Supprimer)
         colActionsFacture.setCellFactory(col -> new TableCell<>() {
             private final Button btnPayer = new Button("💳");
             private final Button btnModif = new Button("✏️");
@@ -140,12 +148,12 @@ public class GestionFacturesController implements Initializable {
             private final HBox box = new HBox(5, btnPayer, btnModif, btnSuppr);
 
             {
-                btnPayer.setStyle("-fx-background-color: #1565C0; -fx-text-fill: white;"
-                        + "-fx-background-radius: 4; -fx-cursor: hand;");
-                btnModif.setStyle("-fx-background-color: #FFA726; -fx-text-fill: white;"
-                        + "-fx-background-radius: 4; -fx-cursor: hand;");
-                btnSuppr.setStyle("-fx-background-color: #EF5350; -fx-text-fill: white;"
-                        + "-fx-background-radius: 4; -fx-cursor: hand;");
+                btnPayer.setStyle(
+                        "-fx-background-color: #1565C0; -fx-text-fill: white; -fx-background-radius: 4; -fx-cursor: hand;");
+                btnModif.setStyle(
+                        "-fx-background-color: #FFA726; -fx-text-fill: white; -fx-background-radius: 4; -fx-cursor: hand;");
+                btnSuppr.setStyle(
+                        "-fx-background-color: #EF5350; -fx-text-fill: white; -fx-background-radius: 4; -fx-cursor: hand;");
 
                 btnPayer.setOnAction(e -> {
                     factureSelectionnee = getTableView().getItems().get(getIndex());
@@ -171,52 +179,63 @@ public class GestionFacturesController implements Initializable {
         tableFactures.setItems(listeFactures);
     }
 
+    /**
+     * Initialise la combo de filtrage par état.
+     */
     private void configurerComboFiltre() {
-        comboFiltreStatut.setItems(FXCollections.observableArrayList(
-                "Tous", "NON_PAYE", "PARTIEL", "PAYE"));
+        comboFiltreStatut.setItems(FXCollections.observableArrayList("Tous", "NON_PAYE", "PARTIEL", "PAYE"));
         comboFiltreStatut.setValue("Tous");
     }
 
-    // ════════════════════════════════════════════════════════════════════════
-    // Chargement
-    // ════════════════════════════════════════════════════════════════════════
-
+    /**
+     * Charge toutes les factures depuis la base de données.
+     */
     private void chargerFactures() {
         listeFactures.setAll(factureDAO.getToutesLesFactures());
         mettreAJourResume();
-        setStatut("Factures chargées avec succès.");
+        setStatut("Prêt.");
     }
 
+    /**
+     * Calcule et affiche les indicateurs financiers globaux (CA théorique vs CA
+     * encaissé).
+     */
     private void mettreAJourResume() {
         double totalFacture = listeFactures.stream().mapToDouble(Facture::getMontantTotal).sum();
         double totalEncaisse = factureDAO.getTotalRevenusPaies();
         double reste = totalFacture - totalEncaisse;
+
         lblTotalFacture.setText(String.format("%,.0f FCFA", totalFacture));
         lblTotalEncaisse.setText(String.format("%,.0f FCFA", totalEncaisse));
         lblResteAPayer.setText(String.format("%,.0f FCFA", reste));
     }
 
-    // ════════════════════════════════════════════════════════════════════════
-    // Actions FXML
-    // ════════════════════════════════════════════════════════════════════════
-
+    /**
+     * Applique le filtre de statut choisi dans la ComboBox.
+     */
     @FXML
     private void filtrerParStatut() {
         String statut = comboFiltreStatut.getValue();
         if (statut == null || statut.equals("Tous")) {
-            listeFactures.setAll(factureDAO.getToutesLesFactures());
+            chargerFactures();
         } else {
             listeFactures.setAll(factureDAO.getFacturesParStatut(statut));
+            setStatut("Affichage : " + statut);
         }
-        setStatut("Filtre appliqué : " + statut);
     }
 
+    /**
+     * Annule les filtres.
+     */
     @FXML
     private void reinitialiserFiltre() {
         comboFiltreStatut.setValue("Tous");
         chargerFactures();
     }
 
+    /**
+     * Déclenchée lors de la sélection d'une facture.
+     */
     @FXML
     private void onFactureSelectionnee() {
         Facture f = tableFactures.getSelectionModel().getSelectedItem();
@@ -234,34 +253,39 @@ public class GestionFacturesController implements Initializable {
     @FXML
     public void ouvrirFormulaireModification() {
         if (factureSelectionnee == null) {
-            afficherAlerte(Alert.AlertType.WARNING, "Aucune sélection",
-                    "Veuillez sélectionner une facture à modifier.");
+            afficherAlerte(Alert.AlertType.WARNING, "Sélection requise", "Choisissez une facture.");
             return;
         }
         ouvrirFormulaire(factureSelectionnee);
     }
 
+    /**
+     * Ouvre l'interface de saisie d'un nouveau paiement pour la facture
+     * sélectionnée.
+     */
     @FXML
     public void ouvrirFormulairePaiement() {
         if (factureSelectionnee == null)
             return;
+
+        // On n'autorise pas de paiement sur une facture déjà soldée
         if (factureSelectionnee.getStatutPaiement().equals("PAYE")) {
-            afficherAlerte(Alert.AlertType.INFORMATION, "Facture soldée",
-                    "Cette facture est déjà entièrement payée.");
+            afficherAlerte(Alert.AlertType.INFORMATION, "Facture soldée", "Cette facture est déjà payée.");
             return;
         }
+
         try {
-            FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/com/hotel/view/FormulairePaiement.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/hotel/view/FormulairePaiement.fxml"));
             Stage stage = new Stage();
             stage.setScene(new Scene(loader.load()));
-            stage.setTitle("Enregistrer un paiement");
+            stage.setTitle("Nouveau Paiement");
             stage.initModality(Modality.APPLICATION_MODAL);
+
             FormulairePaiementController ctrl = loader.getController();
             ctrl.setFacture(factureSelectionnee);
             ctrl.setOnSauvegardeCallback(() -> {
-                chargerFactures();
-                // Recharger la facture mise à jour pour le panneau de détail
+                chargerFactures(); // Rafraîchit la liste
+                // On met aussi à jour le panneau de détails
                 Facture maj = factureDAO.getFactureParId(factureSelectionnee.getIdFacture());
                 if (maj != null) {
                     factureSelectionnee = maj;
@@ -270,18 +294,23 @@ public class GestionFacturesController implements Initializable {
             });
             stage.showAndWait();
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("[GestionFacturesController] Erreur UI : " + e.getMessage());
         }
     }
 
+    /**
+     * Supprime la facture (cascade possible sur les paiements selon la DB).
+     */
     @FXML
     public void supprimerFacture() {
         if (factureSelectionnee == null)
             return;
+
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
         confirm.setTitle("Confirmation");
-        confirm.setHeaderText("Supprimer la facture ?");
-        confirm.setContentText("Attention : les paiements associés seront aussi supprimés.");
+        confirm.setHeaderText("Supprimer la facture #" + factureSelectionnee.getIdFacture() + " ?");
+        confirm.setContentText("Attention : les paiements liés seront également impactés.");
+
         Optional<ButtonType> rep = confirm.showAndWait();
         if (rep.isPresent() && rep.get() == ButtonType.OK) {
             if (factureDAO.supprimerFacture(factureSelectionnee.getIdFacture())) {
@@ -290,33 +319,36 @@ public class GestionFacturesController implements Initializable {
                 factureSelectionnee = null;
                 setStatut("Facture supprimée.");
             } else {
-                afficherAlerte(Alert.AlertType.ERROR, "Erreur", "Suppression échouée.");
+                afficherAlerte(Alert.AlertType.ERROR, "Erreur", "Action impossible.");
             }
         }
     }
 
-    // ════════════════════════════════════════════════════════════════════════
-    // Utilitaires privés
-    // ════════════════════════════════════════════════════════════════════════
-
+    /**
+     * Charge le dialogue de création/édition.
+     */
     private void ouvrirFormulaire(Facture facture) {
         try {
-            FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/com/hotel/view/FormulaireFacture.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/hotel/view/FormulaireFacture.fxml"));
             Stage stage = new Stage();
             stage.setScene(new Scene(loader.load()));
-            stage.setTitle(facture == null ? "Nouvelle facture" : "Modifier la facture");
+            stage.setTitle(facture == null ? "Nouveau Document" : "Modification");
             stage.initModality(Modality.APPLICATION_MODAL);
+
             FormulaireFactureController ctrl = loader.getController();
             if (facture != null)
                 ctrl.remplirFormulaire(facture);
-            ctrl.setOnSauvegardeCallback(this::chargerFactures);
+            ctrl.setOnSauvegardeCallback(this::chargerClients); // Nom de méthode trompeur (devrait chargerFactures)
             stage.showAndWait();
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("[GestionFacturesController] Erreur UI : " + e.getMessage());
         }
     }
 
+    /**
+     * Affiche les détails d'une facture et l'historique complet des versements
+     * reçus.
+     */
     private void afficherDetail(Facture f) {
         panneauDetail.setVisible(true);
         lblDetailClient.setText("👤 " + f.getNomClient());
@@ -324,6 +356,7 @@ public class GestionFacturesController implements Initializable {
         lblDetailDate.setText("📅 Émise le : " + f.getDateEmission());
         lblDetailMontant.setText("💰 Montant : " + String.format("%,.0f FCFA", f.getMontantTotal()));
 
+        // Mise en forme du statut dans le détail
         String statut = f.getStatutPaiement();
         lblDetailStatut.setText("📌 Statut : " + statut);
         lblDetailStatut.setStyle(switch (statut) {
@@ -332,20 +365,20 @@ public class GestionFacturesController implements Initializable {
             default -> "-fx-text-fill: #B71C1C; -fx-font-weight: bold;";
         });
 
+        // Calcul du solde restant dû
         double dejaPaye = factureDAO.getMontantDejaPaye(f.getIdFacture());
         double restant = f.getMontantTotal() - dejaPaye;
-        lblDetailRestant.setText("⚠️ Restant : " + String.format("%,.0f FCFA", restant));
+        lblDetailRestant.setText("⚠️ Reste à verser : " + String.format("%,.0f FCFA", restant));
 
-        // Historique paiements
+        // Récupération de l'historique des paiements via PaiementDAO
         List<Paiement> paiements = paiementDAO.getPaiementsParFacture(f.getIdFacture());
         ObservableList<String> lignes = FXCollections.observableArrayList();
         for (Paiement p : paiements) {
-            lignes.add(p.getDatePaiement() + "  |  "
-                    + String.format("%,.0f FCFA", p.getMontant())
-                    + "  |  " + p.getModePaiement());
+            lignes.add(p.getDatePaiement() + "  |  " + String.format("%,.0f FCFA", p.getMontant()) + "  |  "
+                    + p.getModePaiement());
         }
         if (lignes.isEmpty())
-            lignes.add("Aucun paiement enregistré.");
+            lignes.add("Aucun versement enregistré.");
         listPaiements.setItems(lignes);
     }
 

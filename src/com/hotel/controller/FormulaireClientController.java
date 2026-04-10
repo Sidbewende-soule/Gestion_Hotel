@@ -8,26 +8,29 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 
+/**
+ * Contrôleur pour le formulaire d'ajout ou modification d'un client (FormulaireClient.fxml).
+ */
 public class FormulaireClientController {
 
-    @FXML private Label     lblTitreFormulaire;
+    @FXML private Label     lblTitreFormulaire; // "Nouveau client" ou "Modifier client"
     @FXML private TextField txtNom;
     @FXML private TextField txtPrenom;
     @FXML private TextField txtTelephone;
     @FXML private TextField txtEmail;
     @FXML private TextField txtAdresse;
     @FXML private TextField txtCarteFidelite;
-    @FXML private Label     lblErreur;
+    @FXML private Label     lblErreur; // Zone d'erreur contextuelle
     @FXML private javafx.scene.control.Button btnEnregistrer;
 
     private final ClientDAO clientDAO = new ClientDAO();
-    private Client  clientEnCours;
-    private Runnable onSauvegardeCallback;
+    private Client  clientEnCours; // Si null -> Ajout, sinon -> Modification
+    private Runnable onSauvegardeCallback; // Action à exécuter après succès
 
-    // ════════════════════════════════════════════════════════════════════════
-    //  API publique
-    // ════════════════════════════════════════════════════════════════════════
-
+    /**
+     * Pré-remplit les champs pour une modification.
+     * @param client L'objet client à modifier
+     */
     public void remplirFormulaire(Client client) {
         this.clientEnCours = client;
         lblTitreFormulaire.setText("Modifier le client");
@@ -39,29 +42,34 @@ public class FormulaireClientController {
         txtCarteFidelite.setText(client.getNumeroCarteFidelite());
     }
 
+    /**
+     * Définit le retour d'appel après enregistrement réussi.
+     */
     public void setOnSauvegardeCallback(Runnable callback) {
         this.onSauvegardeCallback = callback;
     }
 
-    // ════════════════════════════════════════════════════════════════════════
-    //  Actions FXML
-    // ════════════════════════════════════════════════════════════════════════
-
+    /**
+     * Valide et persiste les données du client (Ajout ou Maj).
+     */
     @FXML
     private void enregistrer() {
-        if (!validerChamps()) return;
+        if (!validerChamps()) return; // Vérification des champs obligatoires
 
         boolean succes;
         if (clientEnCours == null) {
+            // Mode Création
             Client nouveau = new Client();
             remplirDepuisChamps(nouveau);
             succes = clientDAO.ajouterClient(nouveau);
         } else {
+            // Mode Modification
             remplirDepuisChamps(clientEnCours);
             succes = clientDAO.modifierClient(clientEnCours);
         }
 
         if (succes) {
+            // Notification du succès au contrôleur parent
             if (onSauvegardeCallback != null) onSauvegardeCallback.run();
             fermerFenetre();
         } else {
@@ -69,15 +77,17 @@ public class FormulaireClientController {
         }
     }
 
+    /**
+     * Ferme le dialogue sans enregistrer.
+     */
     @FXML
     private void annuler() {
         fermerFenetre();
     }
 
-    // ════════════════════════════════════════════════════════════════════════
-    //  Utilitaires privés
-    // ════════════════════════════════════════════════════════════════════════
-
+    /**
+     * Contrôle la validité des champs textuels.
+     */
     private boolean validerChamps() {
         if (txtNom.getText().trim().isEmpty()) {
             afficherErreur("Le champ « Nom » est obligatoire.");
@@ -93,6 +103,9 @@ public class FormulaireClientController {
         return true;
     }
 
+    /**
+     * Transfère le contenu des champs UI vers l'objet modèle.
+     */
     private void remplirDepuisChamps(Client client) {
         client.setNom(txtNom.getText().trim());
         client.setPrenom(txtPrenom.getText().trim());
@@ -102,18 +115,28 @@ public class FormulaireClientController {
         client.setNumeroCarteFidelite(txtCarteFidelite.getText().trim());
     }
 
+    /**
+     * Affiche un message d'alerte rouge.
+     */
     private void afficherErreur(String message) {
         lblErreur.setText("⚠ " + message);
         lblErreur.setVisible(true);
         lblErreur.setManaged(true);
     }
 
+    /**
+     * Cache le message d'alerte.
+     */
     private void masquerErreur() {
         lblErreur.setVisible(false);
         lblErreur.setManaged(false);
     }
 
+    /**
+     * Ferme la fenêtre pop-up actuelle.
+     */
     private void fermerFenetre() {
         ((Stage) txtNom.getScene().getWindow()).close();
     }
 }
+

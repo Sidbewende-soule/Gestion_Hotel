@@ -36,15 +36,13 @@ import java.util.Map;
 import java.util.ResourceBundle;
 
 /**
- * Controller du tableau de bord.
- * – Affiche 4 KPIs temps réel
- * – Graphique barres (Canvas) revenus mensuels
- * – Rafraîchissement automatique toutes les 30 s
- * – Export CSV (Excel) et PDF (PrinterJob)
+ * Contrôleur du Tableau de Bord (Dashboard.fxml).
+ * Gère l'affichage dynamique des statistiques, le graphique des revenus,
+ * le rafraîchissement automatique et les fonctions d'exportation.
  */
 public class DashboardController implements Initializable {
 
-    // ── KPI Labels ─────────────────────────────────────────────────────────────
+    // --- Composants FXML : Indicateurs de Performance (KPI) ---
     @FXML private Label kpiReservations;
     @FXML private Label kpiReservationsTotal;
     @FXML private Label kpiRevenus;
@@ -54,18 +52,18 @@ public class DashboardController implements Initializable {
     @FXML private Label kpiNombreAvis;
     @FXML private Label lblDerniereMaj;
 
-    // ── Résumé stats (panneau export) ─────────────────────────────────────────
+    // --- Composants FXML : Résumé pour export ---
     @FXML private Label statReservTotal;
     @FXML private Label statRevenus;
     @FXML private Label statOccupation;
     @FXML private Label statSatisf;
 
-    // ── Graphique ──────────────────────────────────────────────────────────────
-    @FXML private Canvas canvasChart;
-    @FXML private ComboBox<Integer> cbAnnee;
+    // --- Composants FXML : Graphique et Filtre ---
+    @FXML private Canvas canvasChart;      // Zone de dessin du graphique en barres
+    @FXML private ComboBox<Integer> cbAnnee; // Choix de l'année pour les revenus
     @FXML private HBox legendeMois;
 
-    // ── Tableau réservations récentes ─────────────────────────────────────────
+    // --- Composants FXML : Liste des réservations récentes ---
     @FXML private TableView<ReservationResume> tableReservations;
     @FXML private TableColumn<ReservationResume, Integer>   colId;
     @FXML private TableColumn<ReservationResume, String>    colClient;
@@ -74,40 +72,42 @@ public class DashboardController implements Initializable {
     @FXML private TableColumn<ReservationResume, LocalDate> colFin;
     @FXML private TableColumn<ReservationResume, String>    colStatut;
 
-    // ── Boutons ────────────────────────────────────────────────────────────────
+    // --- Composants FXML : Actions ---
     @FXML private Button btnExportPDF;
     @FXML private Button btnExportExcel;
     @FXML private Button btnActualiser;
 
-    // ── Internes ───────────────────────────────────────────────────────────────
+    // --- Variables Internes ---
     private final DashboardDAO dao = new DashboardDAO();
-    private StatsDashboard     stats;
-    private Timeline           autoRefresh;
+    private StatsDashboard     stats; // Conteneur global des statistiques
+    private Timeline           autoRefresh; // Timer pour la mise à jour auto
 
+    // Libellés des mois pour l'affichage du graphique
     private static final String[] MOIS_NOMS = {
         "Jan","Fév","Mar","Avr","Mai","Jun",
         "Jul","Aoû","Sep","Oct","Nov","Déc"
     };
 
-    // ── Couleurs graphique ─────────────────────────────────────────────────────
+    // Palette de couleurs pour les barres du graphique (Camaïeu de bleus/violets)
     private static final String[] COULEURS_BARRES = {
         "#4361EE","#3F37C9","#4895EF","#4CC9F0","#7209B7",
         "#560BAD","#480CA8","#3A0CA3","#3F37C9","#4361EE","#4895EF","#4CC9F0"
     };
 
-    // ══════════════════════════════════════════════════════════════════════════
-    // Initialisation
-    // ══════════════════════════════════════════════════════════════════════════
-
+    /**
+     * Initialisation du contrôleur lors du chargement de la vue.
+     */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        configurerColonnesTableau();
-        remplirComboAnnee();
-        chargerDonnees();
-        demarrerRefreshAuto();
+        configurerColonnesTableau(); // Préparation du tableau des réservations
+        remplirComboAnnee();        // Chargement des années disponibles
+        chargerDonnees();           // Premier chargement des données
+        demarrerRefreshAuto();      // Lancement du timer de 30 secondes
     }
 
-    // ── Config tableau ─────────────────────────────────────────────────────────
+    /**
+     * Définit le mapping entre les colonnes du tableau et les propriétés du modèle.
+     */
     private void configurerColonnesTableau() {
         colId.setCellValueFactory(new PropertyValueFactory<>("idReservation"));
         colClient.setCellValueFactory(new PropertyValueFactory<>("nomClient"));
@@ -116,7 +116,7 @@ public class DashboardController implements Initializable {
         colFin.setCellValueFactory(new PropertyValueFactory<>("dateFin"));
         colStatut.setCellValueFactory(new PropertyValueFactory<>("statut"));
 
-        // Colonne statut colorée
+        // Personnalisation des couleurs selon le statut de la réservation
         colStatut.setCellFactory(col -> new TableCell<>() {
             @Override
             protected void updateItem(String statut, boolean empty) {
@@ -127,10 +127,10 @@ public class DashboardController implements Initializable {
                 } else {
                     setText(statut);
                     String couleur = switch (statut.toUpperCase()) {
-                        case "CONFIRMEE"  -> "-fx-text-fill: #059669; -fx-font-weight: bold;";
-                        case "EN_ATTENTE" -> "-fx-text-fill: #D97706; -fx-font-weight: bold;";
-                        case "ANNULEE"    -> "-fx-text-fill: #DC2626; -fx-font-weight: bold;";
-                        case "TERMINEE"   -> "-fx-text-fill: #6366F1; -fx-font-weight: bold;";
+                        case "CONFIRMEE"  -> "-fx-text-fill: #059669; -fx-font-weight: bold;"; // Vert
+                        case "EN_ATTENTE" -> "-fx-text-fill: #D97706; -fx-font-weight: bold;"; // Orange
+                        case "ANNULEE"    -> "-fx-text-fill: #DC2626; -fx-font-weight: bold;"; // Rouge
+                        case "TERMINEE"   -> "-fx-text-fill: #6366F1; -fx-font-weight: bold;"; // Indigo
                         default            -> "-fx-text-fill: #475569;";
                     };
                     setStyle(couleur);
@@ -139,7 +139,9 @@ public class DashboardController implements Initializable {
         });
     }
 
-    // ── Remplir combo année ────────────────────────────────────────────────────
+    /**
+     * Remplit la ComboBox des années (Année en cours + 4 précédentes).
+     */
     private void remplirComboAnnee() {
         int anneeActuelle = LocalDate.now().getYear();
         ObservableList<Integer> annees = FXCollections.observableArrayList();
@@ -150,13 +152,16 @@ public class DashboardController implements Initializable {
         cbAnnee.setValue(anneeActuelle);
     }
 
-    // ── Chargement principal ───────────────────────────────────────────────────
+    /**
+     * Récupère les données depuis la base de données de manière asynchrone.
+     */
     private void chargerDonnees() {
         int annee = cbAnnee.getValue() != null ? cbAnnee.getValue() : LocalDate.now().getYear();
 
-        // Chargement dans un thread background pour ne pas geler l'UI
+        // Utilisation d'un thread séparé pour éviter de bloquer l'interface utilisateur
         Thread t = new Thread(() -> {
             StatsDashboard s = new StatsDashboard();
+            // Agrégation des indicateurs
             s.setReservationsActives(dao.getNombreReservationsActives());
             s.setTotalReservations(dao.getNombreTotalReservations());
             s.setChambresTotal(dao.getNombreChambresTotal());
@@ -167,8 +172,10 @@ public class DashboardController implements Initializable {
             s.setNombreAvis(dao.getNombreAvis());
             s.setRevenusParMois(dao.getRevenusParMois(annee));
 
+            // Liste des 15 dernières réservations
             java.util.List<ReservationResume> reservations = dao.getReservationsRecentes(15);
 
+            // Mise à jour de l'UI sur le thread JavaFX
             Platform.runLater(() -> {
                 this.stats = s;
                 mettreAJourKPIs(s);
@@ -181,7 +188,9 @@ public class DashboardController implements Initializable {
         t.start();
     }
 
-    // ── Mise à jour KPIs ───────────────────────────────────────────────────────
+    /**
+     * Affiche les chiffres agrégés sur les étiquettes du tableau de bord.
+     */
     private void mettreAJourKPIs(StatsDashboard s) {
         kpiReservations.setText(String.valueOf(s.getReservationsActives()));
         kpiReservationsTotal.setText(s.getTotalReservations() + " réservations au total");
@@ -194,39 +203,43 @@ public class DashboardController implements Initializable {
         kpiSatisfaction.setText(String.format("%.1f / 5", s.getSatisfactionMoyenne()));
         kpiNombreAvis.setText(s.getNombreAvis() + " avis");
 
-        // Résumé panneau export
+        // Mise à jour du résumé textuel (utilisé pour les exports visuels)
         statReservTotal.setText("Réservations : " + s.getTotalReservations());
         statRevenus.setText(String.format("Revenus : %,.0f FCFA", s.getTotalRevenus()));
         statOccupation.setText(String.format("Occupation : %.1f %%", s.getTauxOccupation()));
         statSatisf.setText(String.format("Satisfaction : %.1f/5", s.getSatisfactionMoyenne()));
     }
 
-    // ── Mise à jour tableau ────────────────────────────────────────────────────
+    /**
+     * Remplit le TableView avec les réservations récentes.
+     */
     private void mettreAJourTableau(java.util.List<ReservationResume> liste) {
         tableReservations.setItems(FXCollections.observableArrayList(liste));
     }
 
-    // ── Horodatage ────────────────────────────────────────────────────────────
+    /**
+     * Affiche l'heure de la dernière mise à jour des données.
+     */
     private void mettreAJourHorodatage() {
         String heure = LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
         lblDerniereMaj.setText("↻ Mise à jour : " + heure);
     }
 
-    // ══════════════════════════════════════════════════════════════════════════
-    // Graphique en barres (Canvas)
-    // ══════════════════════════════════════════════════════════════════════════
-
+    /**
+     * Dessine manuellement le graphique des revenus mensuels sur le Canvas.
+     * @param revenusParMois Map contenant les sommes d'argent par mois (1-12)
+     */
     private void dessinerGraphique(Map<Integer, Double> revenusParMois) {
         double largeur  = canvasChart.getWidth();
         double hauteur  = canvasChart.getHeight();
         GraphicsContext gc = canvasChart.getGraphicsContext2D();
 
-        // Fond
+        // Effacer le dessin précédent et dessiner le fond
         gc.clearRect(0, 0, largeur, hauteur);
-        gc.setFill(Color.web("#F8FAFF"));
+        gc.setFill(Color.web("#F8FAFF")); // Blanc cassé
         gc.fillRect(0, 0, largeur, hauteur);
 
-        // Paramètres du graphique
+        // Définition des marges internes du graphique
         double margeGauche = 60;
         double margeDroite = 20;
         double margeHaut   = 20;
@@ -234,52 +247,51 @@ public class DashboardController implements Initializable {
         double zoneW = largeur - margeGauche - margeDroite;
         double zoneH = hauteur - margeHaut - margeBas;
 
-        // Valeur max pour normaliser
+        // Déterminer la valeur maximale pour l'échelle verticale
         double maxVal = revenusParMois.values().stream()
-                                      .mapToDouble(Double::doubleValue).max().orElse(1.0);
+                                       .mapToDouble(Double::doubleValue).max().orElse(1.0);
         if (maxVal == 0) maxVal = 1;
 
-        // Grille horizontale (5 lignes)
+        // Dessiner la grille horizontale de référence
         gc.setStroke(Color.web("#E2E8F0"));
         gc.setLineWidth(1);
         for (int i = 0; i <= 5; i++) {
             double y = margeHaut + zoneH - (zoneH * i / 5.0);
             gc.strokeLine(margeGauche, y, margeGauche + zoneW, y);
-            // Étiquette valeur
+            // Légende des valeurs sur l'axe Y
             gc.setFill(Color.web("#94A3B8"));
             gc.setFont(javafx.scene.text.Font.font(10));
             gc.fillText(String.format("%,.0f", maxVal * i / 5.0), 2, y + 4);
         }
 
-        // Axe Y
+        // Dessiner les axes principaux
         gc.setStroke(Color.web("#CBD5E1"));
         gc.setLineWidth(1.5);
-        gc.strokeLine(margeGauche, margeHaut, margeGauche, margeHaut + zoneH);
-        // Axe X
-        gc.strokeLine(margeGauche, margeHaut + zoneH, margeGauche + zoneW, margeHaut + zoneH);
+        gc.strokeLine(margeGauche, margeHaut, margeGauche, margeHaut + zoneH); // Y
+        gc.strokeLine(margeGauche, margeHaut + zoneH, margeGauche + zoneW, margeHaut + zoneH); // X
 
-        // Barres
+        // Calcul de la taille par défaut des barres
         double barLargeur = (zoneW / 12.0) * 0.6;
         double barEspace  = (zoneW / 12.0);
 
+        // Dessiner chaque barre (une par mois)
         for (int mois = 1; mois <= 12; mois++) {
             double montant = revenusParMois.getOrDefault(mois, 0.0);
-            double barH    = (montant / maxVal) * zoneH;
+            double barH    = (montant / maxVal) * zoneH; // Hauteur proportionnelle au montant
             double x       = margeGauche + (mois - 1) * barEspace + (barEspace - barLargeur) / 2.0;
             double y       = margeHaut + zoneH - barH;
 
-            // Dégradé de la barre
             if (barH > 0) {
+                // Application d'un dégradé de couleur
                 LinearGradient gradient = new LinearGradient(
                     0, y, 0, y + barH, false, CycleMethod.NO_CYCLE,
                     new Stop(0, Color.web(COULEURS_BARRES[mois - 1])),
                     new Stop(1, Color.web(COULEURS_BARRES[mois - 1] + "88"))
                 );
                 gc.setFill(gradient);
-                // Coins arrondis simulés
-                gc.fillRoundRect(x, y, barLargeur, barH, 4, 4);
+                gc.fillRoundRect(x, y, barLargeur, barH, 4, 4); // Coins arrondis
 
-                // Valeur au-dessus si assez de place
+                // Affichage du montant en texte au-dessus de la barre
                 if (barH > 18) {
                     gc.setFill(Color.web("#1E293B"));
                     gc.setFont(javafx.scene.text.Font.font(9));
@@ -289,98 +301,89 @@ public class DashboardController implements Initializable {
                     gc.fillText(valTxt, x + barLargeur / 2 - 8, y - 3);
                 }
             } else {
-                // Barre vide (hauteur minimale)
+                // Trace factice pour les mois sans revenus
                 gc.setFill(Color.web("#E2E8F0"));
                 gc.fillRoundRect(x, margeHaut + zoneH - 3, barLargeur, 3, 2, 2);
             }
 
-            // Étiquette mois
+            // Étiquette du nom du mois sous la barre
             gc.setFill(Color.web("#64748B"));
             gc.setFont(javafx.scene.text.Font.font(10));
             gc.fillText(MOIS_NOMS[mois - 1], x + barLargeur / 2 - 8, margeHaut + zoneH + 16);
         }
     }
 
-    // ══════════════════════════════════════════════════════════════════════════
-    // Auto-refresh (30 secondes)
-    // ══════════════════════════════════════════════════════════════════════════
-
+    /**
+     * Configure le rafraîchissement automatique des statistiques.
+     */
     private void demarrerRefreshAuto() {
+        // Timeline qui appelle chargerDonnees() toutes les 30 secondes indéfiniment
         autoRefresh = new Timeline(new KeyFrame(Duration.seconds(30), e -> chargerDonnees()));
         autoRefresh.setCycleCount(Timeline.INDEFINITE);
         autoRefresh.play();
     }
 
-    // ══════════════════════════════════════════════════════════════════════════
-    // Actions FXML
-    // ══════════════════════════════════════════════════════════════════════════
-
+    /**
+     * Action associée au bouton d'actualisation manuelle.
+     */
     @FXML
     private void actualiser() {
         chargerDonnees();
     }
 
+    /**
+     * Action associée au changement d'année dans la ComboBox.
+     */
     @FXML
     private void changerAnnee() {
         chargerDonnees();
     }
 
-    // ── Export CSV (Excel) ─────────────────────────────────────────────────────
+    /**
+     * Génère un rapport au format CSV compatible avec Excel.
+     */
     @FXML
     private void exporterExcel() {
         FileChooser fc = new FileChooser();
         fc.setTitle("Enregistrer le rapport Excel");
         fc.setInitialFileName("rapport_hotel_" + LocalDate.now() + ".csv");
-        fc.getExtensionFilters().add(
-            new FileChooser.ExtensionFilter("Fichier CSV / Excel (*.csv)", "*.csv"));
+        fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("Fichier CSV / Excel (*.csv)", "*.csv"));
 
         File fichier = fc.showSaveDialog(btnExportExcel.getScene().getWindow());
         if (fichier == null) return;
 
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(fichier))) {
-            // En-tête rapport
-            bw.write("RAPPORT HÔTEL — " + LocalDateTime.now()
-                      .format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
-            bw.newLine();
-            bw.newLine();
+            // Écriture des en-têtes et des KPIs
+            bw.write("RAPPORT HÔTEL — " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
+            bw.newLine(); bw.newLine();
 
-            // KPIs
             bw.write("=== INDICATEURS CLÉS ===");  bw.newLine();
             bw.write("Réservations actives;" + (stats != null ? stats.getReservationsActives() : "—")); bw.newLine();
             bw.write("Total réservations;"  + (stats != null ? stats.getTotalReservations()   : "—")); bw.newLine();
             bw.write("Chambres total;"      + (stats != null ? stats.getChambresTotal()        : "—")); bw.newLine();
             bw.write("Chambres occupées;"   + (stats != null ? stats.getChambresOccupees()     : "—")); bw.newLine();
-            bw.write(String.format("Taux d'occupation;%.1f %%",
-                     stats != null ? stats.getTauxOccupation() : 0)); bw.newLine();
-            bw.write(String.format("Revenus encaissés;%,.0f FCFA",
-                     stats != null ? stats.getTotalRevenus() : 0)); bw.newLine();
-            bw.write(String.format("Satisfaction moyenne;%.1f / 5",
-                     stats != null ? stats.getSatisfactionMoyenne() : 0)); bw.newLine();
+            bw.write(String.format("Taux d'occupation;%.1f %%", stats != null ? stats.getTauxOccupation() : 0)); bw.newLine();
+            bw.write(String.format("Revenus encaissés;%,.0f FCFA", stats != null ? stats.getTotalRevenus() : 0)); bw.newLine();
+            bw.write(String.format("Satisfaction moyenne;%.1f / 5", stats != null ? stats.getSatisfactionMoyenne() : 0)); bw.newLine();
             bw.write("Nombre d'avis;"      + (stats != null ? stats.getNombreAvis() : "—")); bw.newLine();
             bw.newLine();
 
-            // Revenus par mois
+            // Écriture du détail des revenus mensuels
             bw.write("=== REVENUS MENSUELS (" + cbAnnee.getValue() + ") ==="); bw.newLine();
             bw.write("Mois;Revenus (FCFA)"); bw.newLine();
             if (stats != null && stats.getRevenusParMois() != null) {
                 for (Map.Entry<Integer, Double> entry : stats.getRevenusParMois().entrySet()) {
-                    bw.write(MOIS_NOMS[entry.getKey() - 1] + ";"
-                             + String.format("%.0f", entry.getValue()));
+                    bw.write(MOIS_NOMS[entry.getKey() - 1] + ";" + String.format("%.0f", entry.getValue()));
                     bw.newLine();
                 }
             }
             bw.newLine();
 
-            // Tableau réservations récentes
+            // Écriture de la liste des réservations affichées
             bw.write("=== RÉSERVATIONS RÉCENTES ==="); bw.newLine();
             bw.write("N°;Client;Chambre;Arrivée;Départ;Statut"); bw.newLine();
             for (ReservationResume r : tableReservations.getItems()) {
-                bw.write(r.getIdReservation() + ";"
-                       + r.getNomClient()     + ";"
-                       + r.getChambre()       + ";"
-                       + r.getDateDebut()     + ";"
-                       + r.getDateFin()       + ";"
-                       + r.getStatut());
+                bw.write(r.getIdReservation() + ";" + r.getNomClient() + ";" + r.getChambre() + ";" + r.getDateDebut() + ";" + r.getDateFin() + ";" + r.getStatut());
                 bw.newLine();
             }
 
@@ -391,20 +394,21 @@ public class DashboardController implements Initializable {
         }
     }
 
-    // ── Export PDF via PrinterJob ──────────────────────────────────────────────
+    /**
+     * Utilise les fonctionnalités d'impression natives de l'OS pour générer un PDF.
+     */
     @FXML
     private void exporterPDF() {
         PrinterJob job = PrinterJob.createPrinterJob();
         if (job == null) {
-            afficherErreur("Erreur", "Aucune imprimante disponible.\n"
-                + "Veuillez installer « Microsoft Print to PDF ».");
+            afficherErreur("Erreur", "Aucune imprimante disponible.\nVeuillez installer « Microsoft Print to PDF ».");
             return;
         }
-        // Ouvrir le dialogue d'impression (choix Microsoft Print to PDF)
+
         boolean affiche = job.showPrintDialog(btnExportPDF.getScene().getWindow());
         if (!affiche) return;
 
-        // Imprimer la scène entière (le ScrollPane parent)
+        // On imprime le nœud racine de la scène actuelle
         javafx.scene.Node racine = btnExportPDF.getScene().getRoot();
         boolean ok = job.printPage(racine);
         if (ok) {
@@ -415,9 +419,9 @@ public class DashboardController implements Initializable {
         }
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Utilitaires dialogue
-    // ─────────────────────────────────────────────────────────────────────────
+    /**
+     * Utilitaire pour afficher une boîte de dialogue d'information.
+     */
     private void afficherInfo(String titre, String message) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle(titre);
@@ -434,3 +438,4 @@ public class DashboardController implements Initializable {
         alert.showAndWait();
     }
 }
+

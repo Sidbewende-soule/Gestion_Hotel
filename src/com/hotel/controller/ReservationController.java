@@ -17,21 +17,29 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.ResourceBundle;
 
+/**
+ * Contrôleur pour la création d'une nouvelle réservation (Reservation.fxml).
+ * Gère le filtrage des chambres disponibles, la vérification des chevauchements de dates
+ * et l'affectation des demandes spéciales.
+ */
 public class ReservationController implements Initializable {
 
     // --- Composants FXML ---
     @FXML private DatePicker dateDebutPicker;
     @FXML private DatePicker dateFinPicker;
     @FXML private ComboBox<String> cmbChambre; 
-    @FXML private ListView<CheckBox> listViewDemandes;
+    @FXML private ListView<CheckBox> listViewDemandes; // Liste des options (Petit dej, etc.)
     @FXML private ComboBox<String> cmbClient;
     @FXML private TextArea txtNotes;
 
-    // --- DAO ---
+    // --- DAOs ---
     private ReservationDAO reservationDAO = new ReservationDAO();
     private ChambreDAO chambreDAO = new ChambreDAO();
     private com.hotel.dao.ClientDAO clientDAO = new com.hotel.dao.ClientDAO();
 
+    /**
+     * Utilitaire interne pour rendre l'ID type lisible.
+     */
     private String convertirIdTypeEnNom(int idType) {
         switch (idType) {
             case 1: return "Simple";
@@ -41,36 +49,42 @@ public class ReservationController implements Initializable {
         }
     }
 
+    /**
+     * Initialisation du formulaire : chargement des données de référence.
+     */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         cmbChambre.getItems().clear();
         listViewDemandes.getItems().clear();
         
-        // CORRECTION : On ne liste désormais QUE les chambres disponibles
+        // 1. Chargement des chambres "libres" (Statut DISPONIBLE)
         List<Chambre> listeDisponibles = chambreDAO.listerChambresDisponibles();
-        
         for (Chambre c : listeDisponibles) {
             String nomType = convertirIdTypeEnNom(c.getIdType());
             String display = c.getNumero() + " (" + nomType + ")";
             cmbChambre.getItems().add(display);
         }
 
-        // Chargement des clients
+        // 2. Chargement de la liste des clients inscrits
         cmbClient.getItems().clear();
         List<Client> listeClients = clientDAO.getTousLesClients();
         for (Client cli : listeClients) {
+            // Format ID - Nom Prénom pour faciliter le parsing ultérieur
             cmbClient.getItems().add(cli.getIdClient() + " - " + cli.getNom() + " " + cli.getPrenom());
         }
 
-        // Chargement des demandes spéciales
+        // 3. Chargement des options supplémentaires sous forme de CheckBoxes
         List<DemandeSpeciale> listeDemandes = reservationDAO.listerToutesLesDemandes();
         for (DemandeSpeciale d : listeDemandes) {
             CheckBox cb = new CheckBox(d.getNomDemande());
-            cb.setUserData(d.getId());
+            cb.setUserData(d.getId()); // On garde l'ID technique en mémoire
             listViewDemandes.getItems().add(cb);
         }
     }
 
+    /**
+     * Ouvre la vue de consultation/modification globale des réservations.
+     */
     @FXML
     public void ouvrirGestionReservations() {
         try {
@@ -78,76 +92,88 @@ public class ReservationController implements Initializable {
             Parent root = fxmlLoader.load();
             
             Stage stage = new Stage();
-            stage.setTitle("Gestion des réservations");
+            stage.setTitle("Archives & Gestion");
             stage.setScene(new Scene(root));
             stage.initModality(Modality.APPLICATION_MODAL);
             stage.showAndWait();
         } catch (IOException e) {
-            e.printStackTrace();
-            afficherAlerte(Alert.AlertType.ERROR, "Erreur", "Impossible d'ouvrir la fenêtre de gestion.");
+            afficherAlerte(Alert.AlertType.ERROR, "Navigation", "Erreur lors de l'accès à la gestion.");
         }
     }
 
+    /**
+     * Procède à la validation, au contrôle de disponibilité et à l'enregistrement en base.
+     */
     @FXML
     public void validerReservation() {
         try {
+            // Vérification basique des champs obligatoires
             if (cmbChambre.getValue() == null || cmbClient.getValue() == null || dateDebutPicker.getValue() == null || dateFinPicker.getValue() == null) {
-                afficherAlerte(Alert.AlertType.WARNING, "Champs manquants", "Veuillez remplir tous les champs.");
+                afficherAlerte(Alert.AlertType.WARNING, "Formulaire incomplet", "Veuillez renseigner toutes les informations.");
                 return;
             }
 
+            // Récupération de l'ID de la chambre choisie
             String display = cmbChambre.getValue();
             String numChambre = display.contains(" ") ? display.split(" ")[0] : display;
-            
             int idChambre = reservationDAO.trouverIdParNumero(numChambre);
+            
+            // Récupération des dates
             LocalDate debut = dateDebutPicker.getValue();
             LocalDate fin = dateFinPicker.getValue();
             
+            // Récupération de l'ID client (depuis le format "ID - Nom...")
             String displayClient = cmbClient.getValue();
             int idClient = Integer.parseInt(displayClient.split(" - ")[0]);
 
-            if (idChambre == -1) {
-                afficherAlerte(Alert.AlertType.ERROR, "Erreur", "La chambre " + numChambre + " est introuvable.");
-                return;
-            }
+            // --- Contrôles de disponibilité critiques ---
             
+            // 1. État de service (Nettoyage, Maintenance ?)
             String etat = reservationDAO.getEtatChambre(idChambre);
             if (!"DISPONIBLE".equalsIgnoreCase(etat)) {
-                afficherAlerte(Alert.AlertType.ERROR, "Indisponible", "La chambre " + numChambre + " est actuellement : " + etat + ".");
+                afficherAlerte(Alert.AlertType.ERROR, "Statut invalide", "La chambre est actuellement en " + etat);
                 return;
             }
 
+            // 2. Conflit de calendrier (Chevauchement avec une autre réservation)
             if (reservationDAO.estChambreOccupee(idChambre, debut, fin, 0)) {
-                afficherAlerte(Alert.AlertType.ERROR, "Indisponible", "La chambre " + numChambre + " est déjà réservée sur cette période.");
+                afficherAlerte(Alert.AlertType.ERROR, "Conflit de dates", "Cette chambre est déjà prise pour la période choisie.");
                 return;
             }
 
+            // Création de l'objet métier
             String notes = txtNotes.getText();
-
             Reservation res = new Reservation(0, debut, fin, "EN_ATTENTE", idClient, idChambre, notes);
+            
+            // Persistence
             if (reservationDAO.ajouterReservation(res)) {
+                // Enregistrement des demandes spéciales sélectionnées
                 for (CheckBox cb : listViewDemandes.getItems()) {
                     if (cb.isSelected()) {
                         reservationDAO.ajouterDemandeALaReservation(res.getId(), (int) cb.getUserData());
                     }
                 }
-                afficherAlerte(Alert.AlertType.INFORMATION, "Succès", "Réservation de la chambre " + numChambre + " enregistrée.");
                 
-                // On vide COMPLÈTEMENT le formulaire
-                cmbClient.setValue(null);
-                txtNotes.clear();
-                dateDebutPicker.setValue(null);
-                dateFinPicker.setValue(null);
-                
-                initialize(null, null);
+                afficherAlerte(Alert.AlertType.INFORMATION, "Confirmé", "Réservation enregistrée avec succès !");
+                resetFormulaire();
             } else {
-                afficherAlerte(Alert.AlertType.ERROR, "Erreur", "Échec de l'enregistrement.");
+                afficherAlerte(Alert.AlertType.ERROR, "Erreur DB", "L'enregistrement a échoué.");
             }
-        } catch (NumberFormatException e) {
-            afficherAlerte(Alert.AlertType.ERROR, "Erreur", "L'ID Client doit être un nombre.");
         } catch (Exception e) {
-            afficherAlerte(Alert.AlertType.ERROR, "Erreur système", e.getMessage());
+            afficherAlerte(Alert.AlertType.ERROR, "Erreur système", "Une erreur inattendue est survenue : " + e.getMessage());
         }
+    }
+
+    /**
+     * Réinitialise les champs après un succès.
+     */
+    private void resetFormulaire() {
+        cmbClient.setValue(null);
+        cmbChambre.setValue(null);
+        txtNotes.clear();
+        dateDebutPicker.setValue(null);
+        dateFinPicker.setValue(null);
+        initialize(null, null); // Recharger les chambres (le statut d'une vient de changer)
     }
 
     private void afficherAlerte(Alert.AlertType type, String titre, String message) {
@@ -157,4 +183,4 @@ public class ReservationController implements Initializable {
         alert.setContentText(message);
         alert.showAndWait();
     }
-}
+}

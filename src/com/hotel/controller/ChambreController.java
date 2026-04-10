@@ -9,6 +9,10 @@ import javafx.scene.control.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Contrôleur pour la gestion des chambres (Chambre.fxml).
+ * Gère l'affichage, l'ajout, la modification et l'assignation du personnel aux chambres.
+ */
 public class ChambreController {
     
     @FXML private TableView<Chambre> tableChambres;
@@ -16,19 +20,24 @@ public class ChambreController {
     @FXML private TableColumn<Chambre, Number> colPrix, colType;
     @FXML private TextField txtNumero, txtPrix;
     @FXML private ComboBox<String> cmbType, cmbEtat;
-    @FXML private ComboBox<Employe> cmbEmployes;
+    @FXML private ComboBox<Employe> cmbEmployes; // Liste du personnel disponible
     @FXML private Button btnAjouter, btnModifier, btnSupprimer, btnValider;
 
     private ChambreDAO chambreDAO = new ChambreDAO();
 
+    /**
+     * Initialisation de la vue et configuration des colonnes du tableau.
+     */
     @FXML
     public void initialize() {
+        // Liaison des colonnes avec les propriétés de l'objet Chambre
         colNumero.setCellValueFactory(d -> d.getValue().numeroProperty());
         colEtat.setCellValueFactory(d -> d.getValue().etatProperty());
         colPrix.setCellValueFactory(d -> d.getValue().prixParNuitProperty());
         colType.setCellValueFactory(d -> d.getValue().idTypeProperty());
         colPersonnel.setCellValueFactory(d -> d.getValue().nomPersonnelProperty());
 
+        // Traduction visuelle de l'ID type (1, 2, 3) en libellé (Simple, Double, Suite)
         colType.setCellFactory(column -> new TableCell<Chambre, Number>() {
             @Override
             protected void updateItem(Number item, boolean empty) {
@@ -45,10 +54,11 @@ public class ChambreController {
             }
         });
 
+        // Initialisation des options des ComboBox
         cmbType.getItems().addAll("Simple", "Double", "Suite");
         cmbEtat.getItems().addAll("DISPONIBLE", "EN_NETTOYAGE", "EN_MAINTENANCE");
 
-        // AUTOMATISATION DU PRIX
+        // AUTOMATISATION DU PRIX : Suggère un prix selon le type sélectionné
         cmbType.setOnAction(e -> {
             String type = cmbType.getValue();
             if (type != null) {
@@ -61,8 +71,10 @@ public class ChambreController {
             }
         });
 
+        // Filtrage dynamique du personnel selon l'état choisi (ex: Nettoyage -> liste des nettoyeurs)
         cmbEtat.setOnAction(e -> filtrerEmployesParEtat(cmbEtat.getValue()));
 
+        // Remplissage automatique des champs lors d'une sélection dans le tableau
         tableChambres.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null) {
                 txtNumero.setText(newVal.getNumero());
@@ -72,6 +84,7 @@ public class ChambreController {
             }
         });
 
+        // Liaison des événements boutons
         btnAjouter.setOnAction(e -> onAjouterClicked());
         btnModifier.setOnAction(e -> onModifierClicked());
         btnSupprimer.setOnAction(e -> onSupprimerClicked());
@@ -80,7 +93,9 @@ public class ChambreController {
         rafraichirTable();
     }
     
-    // ... reste de tes méthodes onAjouter, onModifier, etc. restent inchangées ...
+    /**
+     * Enregistre une nouvelle chambre en base.
+     */
     public void onAjouterClicked() {
         try {
             int idType = cmbType.getSelectionModel().getSelectedIndex() + 1;
@@ -89,6 +104,9 @@ public class ChambreController {
         } catch (Exception e) { afficherAlerte("Erreur", "Vérifiez vos saisies."); }
     }
 
+    /**
+     * Met à jour les informations structurelles de la chambre sélectionnée.
+     */
     public void onModifierClicked() {
         Chambre selected = tableChambres.getSelectionModel().getSelectedItem();
         if (selected != null) {
@@ -100,6 +118,9 @@ public class ChambreController {
         }
     }
 
+    /**
+     * Supprime définitivement une chambre.
+     */
     public void onSupprimerClicked() {
         Chambre selected = tableChambres.getSelectionModel().getSelectedItem();
         if (selected != null) {
@@ -110,23 +131,35 @@ public class ChambreController {
         }
     }
 
+    /**
+     * Valide le changement d'état (ex: Disponible -> Nettoyage) et l'assignation du personnel.
+     */
     public void onValiderClicked() {
         Chambre selected = tableChambres.getSelectionModel().getSelectedItem();
         String etat = cmbEtat.getValue();
         Employe emp = cmbEmployes.getSelectionModel().getSelectedItem();
         if (selected != null && etat != null) {
-            if (etat.equals("DISPONIBLE")) { chambreDAO.libererChambre(selected.getIdChambre()); }
-            else if (emp != null) { chambreDAO.mettreAJourStatut(selected.getIdChambre(), etat, emp.getId()); }
-            else { afficherAlerte("Erreur", "Veuillez choisir un employé."); return; }
+            if (etat.equals("DISPONIBLE")) {
+                // Si elle redevient disponible, on retire l'employé assigné
+                chambreDAO.libererChambre(selected.getIdChambre()); 
+            } else if (emp != null) {
+                // Sinon on assigne le personnel choisi
+                chambreDAO.mettreAJourStatut(selected.getIdChambre(), etat, emp.getId()); 
+            } else {
+                afficherAlerte("Erreur", "Veuillez choisir un employé."); 
+                return; 
+            }
             rafraichirTable();
         }
     }
 
+    /**
+     * Charge le personnel disponible pour l'assignation.
+     */
     private void filtrerEmployesParEtat(String etat) {
         List<Employe> tous = chambreDAO.listerEmployes();
         if ("EN_NETTOYAGE".equals(etat) || "EN_MAINTENANCE".equals(etat)) {
-            // On affiche tous les employés pour laisser le choix total à l'utilisateur
-            // (La table n'ayant pas forcément les ENUM exacts 'NETTOYEUR')
+            // Dans cette version, on laisse le choix parmi tout le personnel pour plus de flexibilité
             cmbEmployes.setItems(FXCollections.observableArrayList(tous));
         } else {
             cmbEmployes.setItems(FXCollections.observableArrayList());
@@ -134,9 +167,17 @@ public class ChambreController {
         }
     }
 
-    private void rafraichirTable() { tableChambres.setItems(FXCollections.observableArrayList(chambreDAO.listerToutesLesChambres())); }
+    /**
+     * Recharge les données depuis la base et rafraîchit l'affichage.
+     */
+    private void rafraichirTable() { 
+        tableChambres.setItems(FXCollections.observableArrayList(chambreDAO.listerToutesLesChambres())); 
+    }
     
+    /**
+     * Utilitaire d'affichage d'erreurs.
+     */
     private void afficherAlerte(String t, String m) { 
         Alert a = new Alert(Alert.AlertType.ERROR); a.setTitle(t); a.setContentText(m); a.show(); 
     }
-}
+}

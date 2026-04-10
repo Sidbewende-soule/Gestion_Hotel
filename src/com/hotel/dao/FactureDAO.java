@@ -8,20 +8,25 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * DAO pour la table `facture`.
+ * Data Access Object pour la gestion des Factures.
+ * Permet de lister les facturations et de suivre les états de paiement.
  */
 public class FactureDAO {
 
     private final Connection connection;
 
+    /**
+     * Initialise la connexion active.
+     */
     public FactureDAO() {
         this.connection = DatabaseConnection.getInstance().getConnection();
     }
 
-    // ════════════════════════════════════════════════════════════════════════
-    // CREATE
-    // ════════════════════════════════════════════════════════════════════════
-
+    /**
+     * Crée une nouvelle facture en base de données.
+     * @param facture L'objet facture à insérer
+     * @return true si l'ajout a réussi
+     */
     public boolean ajouterFacture(Facture facture) {
         String sql = "INSERT INTO facture (date_emission, montant_total, statut_paiement, id_reservation) "
                 + "VALUES (?, ?, ?, ?)";
@@ -32,26 +37,25 @@ public class FactureDAO {
             ps.setInt(4, facture.getIdReservation());
             int rows = ps.executeUpdate();
             if (rows > 0) {
+                // Récupération de l'ID auto-généré
                 ResultSet keys = ps.getGeneratedKeys();
                 if (keys.next())
                     facture.setIdFacture(keys.getInt(1));
                 return true;
             }
         } catch (SQLException e) {
-            System.err.println("[FactureDAO] ajouterFacture : " + e.getMessage());
+            System.err.println("[FactureDAO] Erreur ajouterFacture : " + e.getMessage());
         }
         return false;
     }
 
-    // ════════════════════════════════════════════════════════════════════════
-    // READ
-    // ════════════════════════════════════════════════════════════════════════
-
     /**
-     * Retourne toutes les factures avec le nom du client (via JOIN).
+     * Récupère la liste exhaustive des factures avec les informations client et chambre.
+     * @return Liste d'objets Facture triée par date
      */
     public List<Facture> getToutesLesFactures() {
         List<Facture> liste = new ArrayList<>();
+        // Jointures multiples pour récupérer les informations de présentation (Nom, Numéro chambre)
         String sql = "SELECT f.id_facture, f.date_emission, f.montant_total, "
                 + "f.statut_paiement, f.id_reservation, "
                 + "c.nom, c.prenom, ch.numero "
@@ -65,15 +69,13 @@ public class FactureDAO {
             while (rs.next())
                 liste.add(mapResultSet(rs));
         } catch (SQLException e) {
-            System.err.println("[FactureDAO] getToutesLesFactures : " + e.getMessage());
+            System.err.println("[FactureDAO] Erreur getToutesLesFactures : " + e.getMessage());
         }
         return liste;
     }
 
     /**
-     * Retourne les factures filtrées par statut de paiement.
-     * 
-     * @param statut NON_PAYE, PARTIEL ou PAYE
+     * Récupère les factures selon leur état (PAYE, NON_PAYE, etc.).
      */
     public List<Facture> getFacturesParStatut(String statut) {
         List<Facture> liste = new ArrayList<>();
@@ -92,11 +94,14 @@ public class FactureDAO {
             while (rs.next())
                 liste.add(mapResultSet(rs));
         } catch (SQLException e) {
-            System.err.println("[FactureDAO] getFacturesParStatut : " + e.getMessage());
+            System.err.println("[FactureDAO] Erreur getFacturesParStatut : " + e.getMessage());
         }
         return liste;
     }
 
+    /**
+     * Recherche une facture précise par son identifiant.
+     */
     public Facture getFactureParId(int idFacture) {
         String sql = "SELECT f.id_facture, f.date_emission, f.montant_total, "
                 + "f.statut_paiement, f.id_reservation, "
@@ -112,13 +117,13 @@ public class FactureDAO {
             if (rs.next())
                 return mapResultSet(rs);
         } catch (SQLException e) {
-            System.err.println("[FactureDAO] getFactureParId : " + e.getMessage());
+            System.err.println("[FactureDAO] Erreur getFactureParId : " + e.getMessage());
         }
         return null;
     }
 
     /**
-     * Calcule le total déjà payé pour une facture donnée.
+     * Calcule dynamiquement le montant total des paiements déjà enregistrés pour cette facture.
      */
     public double getMontantDejaPaye(int idFacture) {
         String sql = "SELECT COALESCE(SUM(montant), 0) FROM paiement WHERE id_facture = ?";
@@ -128,13 +133,13 @@ public class FactureDAO {
             if (rs.next())
                 return rs.getDouble(1);
         } catch (SQLException e) {
-            System.err.println("[FactureDAO] getMontantDejaPaye : " + e.getMessage());
+            System.err.println("[FactureDAO] Erreur getMontantDejaPaye : " + e.getMessage());
         }
         return 0.0;
     }
 
     /**
-     * Calcule le total de toutes les factures payées (pour le dashboard).
+     * Agrégat pour le Dashboard : Somme des montants de toutes les factures payées.
      */
     public double getTotalRevenusPaies() {
         String sql = "SELECT COALESCE(SUM(montant_total), 0) FROM facture WHERE statut_paiement = 'PAYE'";
@@ -143,15 +148,14 @@ public class FactureDAO {
             if (rs.next())
                 return rs.getDouble(1);
         } catch (SQLException e) {
-            System.err.println("[FactureDAO] getTotalRevenusPaies : " + e.getMessage());
+            System.err.println("[FactureDAO] Erreur getTotalRevenusPaies : " + e.getMessage());
         }
         return 0.0;
     }
 
-    // ════════════════════════════════════════════════════════════════════════
-    // UPDATE
-    // ════════════════════════════════════════════════════════════════════════
-
+    /**
+     * Met à jour uniquement le statut de paiement d'une facture.
+     */
     public boolean modifierStatut(int idFacture, String nouveauStatut) {
         String sql = "UPDATE facture SET statut_paiement = ? WHERE id_facture = ?";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
@@ -159,30 +163,28 @@ public class FactureDAO {
             ps.setInt(2, idFacture);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("[FactureDAO] modifierStatut : " + e.getMessage());
+            System.err.println("[FactureDAO] Erreur modifierStatut : " + e.getMessage());
         }
         return false;
     }
 
-    // ════════════════════════════════════════════════════════════════════════
-    // DELETE
-    // ════════════════════════════════════════════════════════════════════════
-
+    /**
+     * Supprime une facture.
+     */
     public boolean supprimerFacture(int idFacture) {
         String sql = "DELETE FROM facture WHERE id_facture = ?";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, idFacture);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("[FactureDAO] supprimerFacture : " + e.getMessage());
+            System.err.println("[FactureDAO] Erreur supprimerFacture : " + e.getMessage());
         }
         return false;
     }
 
-    // ════════════════════════════════════════════════════════════════════════
-    // Utilitaire privé
-    // ════════════════════════════════════════════════════════════════════════
-
+    /**
+     * Transforme une ligne SQL ResultSet en objet Facture avec données client/chambre.
+     */
     private Facture mapResultSet(ResultSet rs) throws SQLException {
         Facture f = new Facture(
                 rs.getInt("id_facture"),
@@ -190,8 +192,10 @@ public class FactureDAO {
                 rs.getDouble("montant_total"),
                 rs.getString("statut_paiement"),
                 rs.getInt("id_reservation"));
+        // Remplissage des champs transient pour l'affichage
         f.setNomClient(rs.getString("prenom") + " " + rs.getString("nom"));
         f.setNumerosChambre("Chambre " + rs.getString("numero"));
         return f;
     }
 }
+
