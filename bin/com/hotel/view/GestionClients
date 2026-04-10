@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.*?>
+
+<BorderPane
+    xmlns="http://javafx.com/javafx/21"
+    xmlns:fx="http://javafx.com/fxml/1"
+    fx:controller="com.hotel.controller.GestionClientsController"
+    style="-fx-background-color: #F4F6F9;">
+
+    <!-- ══ HAUT : Titre + bouton Nouveau client ══ -->
+    <top>
+        <HBox alignment="CENTER_LEFT" spacing="20"
+              style="-fx-background-color: #1A237E; -fx-padding: 16 24;">
+            <Label text="👥  Gestion des Clients"
+                   style="-fx-text-fill: white; -fx-font-size: 20px; -fx-font-weight: bold;"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Button fx:id="btnNouveauClient" text="＋  Nouveau client"
+                    onAction="#ouvrirFormulaireAjout"
+                    style="-fx-background-color: #42A5F5; -fx-text-fill: white;
+                           -fx-font-weight: bold; -fx-padding: 8 18;
+                           -fx-background-radius: 6; -fx-cursor: hand;"/>
+        </HBox>
+    </top>
+
+    <!-- ══ CENTRE : Recherche + TableView ══ -->
+    <center>
+        <VBox spacing="12" style="-fx-padding: 20;">
+
+            <!-- Barre de recherche -->
+            <HBox spacing="10" alignment="CENTER_LEFT">
+                <Label text="🔍" style="-fx-font-size: 16px;"/>
+                <TextField fx:id="txtRecherche"
+                           promptText="Rechercher par nom, prénom ou email…"
+                           onKeyReleased="#rechercherClient"
+                           style="-fx-pref-width: 340px; -fx-padding: 7 12;
+                                  -fx-background-radius: 6; -fx-border-color: #BDBDBD;
+                                  -fx-border-radius: 6;"/>
+                <Button text="Réinitialiser" onAction="#reinitialiserRecherche"
+                        style="-fx-background-color: #ECEFF1; -fx-border-color: #BDBDBD;
+                               -fx-border-radius: 6; -fx-background-radius: 6;
+                               -fx-padding: 7 14; -fx-cursor: hand;"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label fx:id="lblNombreClients" text="0 client(s)"
+                       style="-fx-text-fill: #757575; -fx-font-style: italic;"/>
+            </HBox>
+
+            <!-- TableView -->
+            <TableView fx:id="tableClients"
+                       onMouseClicked="#onClientSelectionne"
+                       VBox.vgrow="ALWAYS"
+                       style="-fx-background-radius: 8; -fx-border-color: #E0E0E0;
+                              -fx-border-radius: 8;">
+                <columns>
+                    <TableColumn fx:id="colId"           text="ID"          prefWidth="55"
+                                 style="-fx-alignment: CENTER;"/>
+                    <TableColumn fx:id="colNom"          text="Nom"         prefWidth="130"/>
+                    <TableColumn fx:id="colPrenom"       text="Prénom"      prefWidth="130"/>
+                    <TableColumn fx:id="colTelephone"    text="Téléphone"   prefWidth="120"/>
+                    <TableColumn fx:id="colEmail"        text="Email"       prefWidth="200"/>
+                    <TableColumn fx:id="colAdresse"      text="Adresse"     prefWidth="180"/>
+                    <TableColumn fx:id="colCarteFidelite" text="N° Fidélité" prefWidth="110"/>
+                    <TableColumn fx:id="colActions"      text="Actions"     prefWidth="160"
+                                 style="-fx-alignment: CENTER;"/>
+                </columns>
+                <placeholder>
+                    <Label text="Aucun client trouvé."
+                           style="-fx-text-fill: #9E9E9E; -fx-font-size: 14px;"/>
+                </placeholder>
+            </TableView>
+        </VBox>
+    </center>
+
+    <!-- ══ DROITE : Panneau détails ══ -->
+    <right>
+        <VBox fx:id="panneauDetail" spacing="14"
+              visible="false"
+              style="-fx-background-color: white; -fx-padding: 20;
+                     -fx-pref-width: 300px; -fx-border-color: #E0E0E0;
+                     -fx-border-width: 0 0 0 1;">
+
+            <Label text="Détails du client"
+                   style="-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #1A237E;"/>
+            <Separator/>
+
+            <Label fx:id="lblDetailNom"      text="" style="-fx-font-weight: bold; -fx-font-size: 14px;"/>
+            <Label fx:id="lblDetailTel"      text="" style="-fx-text-fill: #555;"/>
+            <Label fx:id="lblDetailEmail"    text="" style="-fx-text-fill: #555;"/>
+            <Label fx:id="lblDetailAdresse"  text="" style="-fx-text-fill: #555;"/>
+            <Label fx:id="lblDetailFidelite" text="" style="-fx-text-fill: #1976D2; -fx-font-weight: bold;"/>
+
+            <Separator/>
+
+            <Label text="Historique des avis"
+                   style="-fx-font-weight: bold; -fx-text-fill: #424242;"/>
+            <ListView fx:id="listAvis" VBox.vgrow="ALWAYS"
+                      style="-fx-background-color: #FAFAFA; -fx-border-color: #E0E0E0;
+                             -fx-border-radius: 6; -fx-background-radius: 6;"/>
+
+            <Button text="✏️  Modifier" onAction="#ouvrirFormulaireModification"
+                    maxWidth="Infinity"
+                    style="-fx-background-color: #FFA726; -fx-text-fill: white;
+                           -fx-font-weight: bold; -fx-background-radius: 6;
+                           -fx-padding: 8; -fx-cursor: hand;"/>
+            <Button text="🗑️  Supprimer" onAction="#supprimerClient"
+                    maxWidth="Infinity"
+                    style="-fx-background-color: #EF5350; -fx-text-fill: white;
+                           -fx-font-weight: bold; -fx-background-radius: 6;
+                           -fx-padding: 8; -fx-cursor: hand;"/>
+            <Button text="⭐  Ajouter un avis" onAction="#ouvrirFormulaireAvis"
+                    maxWidth="Infinity"
+                    style="-fx-background-color: #66BB6A; -fx-text-fill: white;
+                           -fx-font-weight: bold; -fx-background-radius: 6;
+                           -fx-padding: 8; -fx-cursor: hand;"/>
+        </VBox>
+    </right>
+
+    <!-- ══ BAS : Barre de statut ══ -->
+    <bottom>
+        <HBox style="-fx-background-color: #E8EAF6; -fx-padding: 6 20;">
+            <Label fx:id="lblStatut" text="Prêt."
+                   style="-fx-text-fill: #555; -fx-font-style: italic;"/>
+        </HBox>
+    </bottom>
+
+</BorderPane>

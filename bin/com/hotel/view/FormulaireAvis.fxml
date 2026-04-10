@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.*?>
+
+<VBox spacing="16"
+      xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.hotel.controller.FormulaireAvisController"
+      styleClass="root, card-panel"
+      stylesheets="@styles.css"
+      style="-fx-pref-width: 420px;">
+
+    <Label text="Ajouter un avis client" styleClass="title-label"/>
+    <Label fx:id="lblNomClient" text="" styleClass="subtitle-label"/>
+
+    <Separator/>
+
+    <HBox spacing="10" alignment="CENTER_LEFT">
+        <Label text="Satisfaction *" style="-fx-font-weight: bold;"/>
+        <ComboBox fx:id="comboSatisfaction" promptText="Note…" styleClass="combo-box" style="-fx-pref-width: 100px;"/>
+        <Label text="/ 5"/>
+    </HBox>
+
+    <Label text="Commentaire *" style="-fx-font-weight: bold;"/>
+    <TextArea fx:id="txtCommentaire" promptText="Saisir le commentaire du client…" prefRowCount="5" wrapText="true" styleClass="text-area"/>
+
+    <Label fx:id="lblErreur" text="" styleClass="error-label" visible="false" managed="false"/>
+
+    <Separator/>
+
+    <HBox spacing="12" alignment="CENTER_RIGHT">
+        <Button text="Annuler" onAction="#annuler" styleClass="button, button-secondary"/>
+        <Button text="Enregistrer l'avis" onAction="#enregistrer" styleClass="button, button-primary"/>
+    </HBox>
+
+</VBox>

@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.*?>
+
+<BorderPane
+    xmlns="http://javafx.com/javafx/21"
+    xmlns:fx="http://javafx.com/fxml/1"
+    fx:controller="com.hotel.controller.GestionFacturesController"
+    styleClass="root"
+    stylesheets="@styles.css">
+
+    <!-- ══ HAUT ══ -->
+    <top>
+        <HBox alignment="CENTER_LEFT" spacing="20" styleClass="card-panel" style="-fx-background-color: #3A0CA3; -fx-background-radius: 0; -fx-border-radius: 0;">
+            <Label text="🧾 Facturation et Paiements"
+                   style="-fx-text-fill: white; -fx-font-size: 22px; -fx-font-weight: bold;"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Button text="＋ Nouvelle facture" onAction="#ouvrirFormulaireAjout"
+                    styleClass="button, button-success" style="-fx-font-size: 14px;"/>
+        </HBox>
+    </top>
+
+    <!-- ══ CENTRE ══ -->
+    <center>
+        <VBox spacing="15" style="-fx-padding: 20;">
+
+            <!-- Filtres et Résumé -->
+            <HBox spacing="15" alignment="CENTER_LEFT">
+                <VBox spacing="5">
+                    <Label text="Filtrer par statut :" styleClass="subtitle-label" style="-fx-font-size: 13px;"/>
+                    <ComboBox fx:id="comboFiltreStatut"
+                              promptText="Tous les statuts"
+                              onAction="#filtrerParStatut"
+                              styleClass="combo-box"
+                              style="-fx-pref-width: 200px;"/>
+                </VBox>
+                <Button text="Réinitialiser" onAction="#reinitialiserFiltre"
+                        styleClass="button, button-secondary" style="-fx-translate-y: 10;"/>
+                
+                <Region HBox.hgrow="ALWAYS"/>
+
+                <!-- Résumé financier -->
+                <HBox spacing="20" alignment="CENTER" styleClass="card-panel" style="-fx-padding: 10 20;">
+                    <VBox alignment="CENTER">
+                        <Label text="TOTAL FACTURÉ" styleClass="kpi-label" style="-fx-text-fill: #64748B;"/>
+                        <Label fx:id="lblTotalFacture" text="0 FCFA" styleClass="subtitle-label" style="-fx-text-fill: #3A0CA3;"/>
+                    </VBox>
+                    <Separator orientation="VERTICAL"/>
+                    <VBox alignment="CENTER">
+                        <Label text="TOTAL ENCAISSÉ" styleClass="kpi-label" style="-fx-text-fill: #64748B;"/>
+                        <Label fx:id="lblTotalEncaisse" text="0 FCFA" styleClass="subtitle-label" style="-fx-text-fill: #10B981;"/>
+                    </VBox>
+                    <Separator orientation="VERTICAL"/>
+                    <VBox alignment="CENTER">
+                        <Label text="RESTE À PAYER" styleClass="kpi-label" style="-fx-text-fill: #64748B;"/>
+                        <Label fx:id="lblResteAPayer" text="0 FCFA" styleClass="subtitle-label" style="-fx-text-fill: #EF4444;"/>
+                    </VBox>
+                </HBox>
+            </HBox>
+
+            <!-- TableView Factures -->
+            <TableView fx:id="tableFactures"
+                       onMouseClicked="#onFactureSelectionnee"
+                       VBox.vgrow="ALWAYS"
+                       styleClass="table-view">
+                <columns>
+                    <TableColumn fx:id="colIdFacture"    text="N° Facture"   prefWidth="90" />
+                    <TableColumn fx:id="colClient"       text="Client"        prefWidth="200" />
+                    <TableColumn fx:id="colChambre"      text="Chambre"       prefWidth="100" />
+                    <TableColumn fx:id="colDateEmission" text="Date émission" prefWidth="130" />
+                    <TableColumn fx:id="colMontantTotal" text="Montant total" prefWidth="130" />
+                    <TableColumn fx:id="colStatut"       text="Statut"        prefWidth="120" />
+                    <TableColumn fx:id="colActionsFacture" text="Actions"     prefWidth="180" />
+                </columns>
+                <placeholder>
+                    <Label text="Aucune facture trouvée." styleClass="subtitle-label" style="-fx-text-fill: #94A3B8;"/>
+                </placeholder>
+            </TableView>
+        </VBox>
+    </center>
+
+    <!-- ══ DROITE : Détail facture + paiements ══ -->
+    <right>
+        <VBox fx:id="panneauDetail" spacing="15" visible="false"
+              styleClass="card-panel"
+              style="-fx-pref-width: 340px; -fx-background-radius: 0; -fx-border-radius: 0; -fx-border-width: 0 0 0 1;">
+
+            <Label text="Détail de la facture" styleClass="title-label" style="-fx-font-size: 18px;"/>
+            <Separator/>
+
+            <VBox spacing="8" styleClass="card-panel" style="-fx-background-color: #F8FAFC; -fx-padding: 15;">
+                <Label fx:id="lblDetailClient"   text="" styleClass="subtitle-label"/>
+                <Label fx:id="lblDetailChambre"  text="" styleClass="stat-line"/>
+                <Label fx:id="lblDetailDate"     text="" styleClass="stat-line"/>
+                <HBox spacing="10">
+                     <Label text="Montant :" styleClass="stat-line"/>
+                     <Label fx:id="lblDetailMontant"  text="" style="-fx-font-weight: bold; -fx-text-fill: #3A0CA3;"/>
+                </HBox>
+                <HBox spacing="10">
+                     <Label text="Statut :" styleClass="stat-line"/>
+                     <Label fx:id="lblDetailStatut"   text="" style="-fx-font-weight: bold;"/>
+                </HBox>
+                <HBox spacing="10">
+                     <Label text="Restant :" styleClass="stat-line"/>
+                     <Label fx:id="lblDetailRestant"  text="" style="-fx-text-fill: #EF4444; -fx-font-weight: bold;"/>
+                </HBox>
+            </VBox>
+
+            <Label text="Historique des paiements" styleClass="subtitle-label"/>
+            <ListView fx:id="listPaiements" VBox.vgrow="ALWAYS" styleClass="list-view"/>
+
+            <VBox spacing="10">
+                <Button text="💳 Enregistrer un paiement" onAction="#ouvrirFormulairePaiement"
+                        maxWidth="Infinity" styleClass="button, button-primary"/>
+                <Button text="✏️ Modifier la facture" onAction="#ouvrirFormulaireModification"
+                        maxWidth="Infinity" styleClass="button, button-warning"/>
+                <Button text="🗑️ Supprimer" onAction="#supprimerFacture"
+                        maxWidth="Infinity" styleClass="button, button-danger"/>
+            </VBox>
+        </VBox>
+    </right>
+
+    <!-- ══ BAS : Barre de statut ══ -->
+    <bottom>
+        <HBox styleClass="status-bar">
+            <Label fx:id="lblStatut" text="Prêt." styleClass="stat-line" style="-fx-font-style: italic;"/>
+        </HBox>
+    </bottom>
+
+</BorderPane>

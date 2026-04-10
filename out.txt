@@ -1,0 +1,2 @@
+[DB] Connexion établie avec succès.
+Exit Code: 0 

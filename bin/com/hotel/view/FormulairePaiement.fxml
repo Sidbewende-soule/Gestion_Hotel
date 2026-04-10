@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.*?>
+
+<VBox spacing="16"
+      xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.hotel.controller.FormulairePaiementController"
+      stylesheets="@styles.css"
+      styleClass="root, card-panel"
+      style="-fx-pref-width: 420px;">
+
+    <Label text="Enregistrer un paiement" styleClass="title-label"/>
+    <Label fx:id="lblInfoFacture" text="" styleClass="subtitle-label"/>
+    <Label fx:id="lblResteAPayer" text="" style="-fx-text-fill: #EF4444; -fx-font-weight: bold;"/>
+    <Separator/>
+
+    <GridPane hgap="14" vgap="12">
+
+        <Label text="Date paiement *" GridPane.rowIndex="0" GridPane.columnIndex="0"
+               style="-fx-font-weight: bold;"/>
+        <DatePicker fx:id="datePaiement"
+                    GridPane.rowIndex="0" GridPane.columnIndex="1"
+                    style="-fx-pref-width: 240px;"/>
+
+        <Label text="Montant *" GridPane.rowIndex="1" GridPane.columnIndex="0"
+               style="-fx-font-weight: bold;"/>
+        <TextField fx:id="txtMontant" promptText="Montant en FCFA"
+                   styleClass="text-field"
+                   GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+        <Label text="Mode de paiement *" GridPane.rowIndex="2" GridPane.columnIndex="0"
+               style="-fx-font-weight: bold;"/>
+        <ComboBox fx:id="comboModePaiement"
+                  styleClass="combo-box"
+                  GridPane.rowIndex="2" GridPane.columnIndex="1"
+                  style="-fx-pref-width: 240px;"/>
+
+    </GridPane>
+
+    <Label fx:id="lblErreur" text=""
+           styleClass="error-label"
+           visible="false" managed="false"/>
+    <Separator/>
+
+    <HBox spacing="12" alignment="CENTER_RIGHT">
+        <Button text="Annuler" onAction="#annuler"
+                styleClass="button, button-secondary"/>
+        <Button text="Valider le paiement" onAction="#enregistrer"
+                styleClass="button, button-primary"/>
+    </HBox>
+
+</VBox>

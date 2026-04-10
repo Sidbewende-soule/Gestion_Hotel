@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane prefHeight="650.0" prefWidth="900.0" styleClass="root" stylesheets="@styles.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.hotel.controller.ChambreController">
+   <children>
+      <VBox layoutX="20.0" layoutY="20.0" spacing="20.0" AnchorPane.bottomAnchor="20.0" AnchorPane.leftAnchor="20.0" AnchorPane.rightAnchor="20.0" AnchorPane.topAnchor="20.0">
+         <children>
+            <Label styleClass="title-label" text="🏨 Gestion des Chambres" />
+            
+            <TableView fx:id="tableChambres" prefHeight="400.0" styleClass="table-view" VBox.vgrow="ALWAYS">
+              <columns>
+                <TableColumn fx:id="colNumero" prefWidth="100.0" text="Numéro" />
+                <TableColumn fx:id="colEtat" prefWidth="120.0" text="Etat" />
+                <TableColumn fx:id="colPrix" prefWidth="120.0" text="Prix par Nuit" />
+                <TableColumn fx:id="colType" prefWidth="150.0" text="Type" />
+                <TableColumn fx:id="colPersonnel" prefWidth="200.0" text="Personnel Assigné" />
+              </columns>
+            </TableView>
+            
+            <HBox spacing="20.0" styleClass="card-panel">
+               <children>
+                  <VBox spacing="10.0">
+                     <children>
+                        <Label styleClass="subtitle-label" text="Informations Chambre" />
+                        <TextField fx:id="txtNumero" promptText="Numéro de chambre" styleClass="text-field" />
+                        <TextField fx:id="txtPrix" editable="false" promptText="Prix (auto-calculé)" styleClass="text-field" />
+                        <ComboBox fx:id="cmbType" prefWidth="200.0" promptText="Type de chambre" styleClass="combo-box" />
+                     </children>
+                  </VBox>
+                  
+                  <VBox spacing="10.0">
+                     <children>
+                        <Label styleClass="subtitle-label" text="Maintenance &amp; Statut" />
+                        <ComboBox fx:id="cmbEtat" prefWidth="200.0" promptText="Changer l'état" styleClass="combo-box" />
+                        <ComboBox fx:id="cmbEmployes" prefWidth="200.0" promptText="Assigner un employé" styleClass="combo-box" />
+                        <Button fx:id="btnValider" maxWidth="Infinity" styleClass="button, button-success" text="Valider les modifications" />
+                     </children>
+                  </VBox>
+                  
+                  <Separator orientation="VERTICAL" />
+                  
+                  <VBox alignment="CENTER" spacing="12.0">
+                     <children>
+                        <Button fx:id="btnAjouter" maxWidth="Infinity" styleClass="button, button-primary" text="➕ Ajouter Chambre" />
+                        <Button fx:id="btnModifier" maxWidth="Infinity" styleClass="button, button-warning" text="✏️ Modifier Détails" />
+                        <Button fx:id="btnSupprimer" maxWidth="Infinity" styleClass="button, button-danger" text="🗑️ Supprimer" />
+                     </children>
+                  </VBox>
+               </children>
+            </HBox>
+         </children>
+      </VBox>
+   </children>
+</AnchorPane>

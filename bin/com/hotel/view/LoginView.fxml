@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<StackPane stylesheets="@styles.css" style="-fx-background-color: linear-gradient(to right, #4361EE, #3A0CA3);"
+           xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.hotel.controller.LoginController"
+           prefWidth="800" prefHeight="500">
+
+    <VBox alignment="CENTER" spacing="20" maxWidth="400" maxHeight="380"
+          styleClass="card-panel" style="-fx-padding: 40; -fx-background-color: white; -fx-background-radius: 12px; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 20, 0, 0, 10);">
+        
+        <Label text="🏨 Hôtel Management" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #3A0CA3;"/>
+        <Label text="Veuillez vous authentifier" style="-fx-font-size: 14px; -fx-text-fill: #64748B;"/>
+        
+        <VBox spacing="8" style="-fx-padding: 20 0 0 0;">
+            <Label text="Email ou Identifiant" style="-fx-font-weight: bold; -fx-text-fill: #475569;"/>
+            <TextField fx:id="txtEmail" promptText="admin" styleClass="text-field" prefHeight="40"/>
+            
+            <Label text="Mot de passe" style="-fx-font-weight: bold; -fx-text-fill: #475569; -fx-padding: 10 0 0 0;"/>
+            <PasswordField fx:id="txtPassword" promptText="••••••••" styleClass="text-field" prefHeight="40"/>
+        </VBox>
+        
+        <Label fx:id="lblErreur" text="⚠ Identifiants incorrects." visible="false" managed="false" styleClass="error-label"/>
+        
+        <Button text="Se Connecter" onAction="#handleLogin" styleClass="button, button-primary"
+                maxWidth="Infinity" prefHeight="45" style="-fx-font-size: 15px; -fx-margin: 10 0 0 0;"/>
+                
+        <Label text="Mode Test dispo : 'admin'/'admin', 'reception'/'reception', 'direction'/'direction'" style="-fx-font-size: 11px; -fx-text-fill: #9CA3AF; -fx-alignment: center;" wrapText="true"/>
+    </VBox>
+</StackPane>

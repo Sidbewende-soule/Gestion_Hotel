@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.Button?>
+<?import javafx.geometry.Insets?>
+
+<VBox alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" 
+      prefHeight="650.0" prefWidth="600.0" spacing="20.0" 
+      styleClass="root, card-panel"
+      stylesheets="@styles.css"
+      xmlns="http://javafx.com/javafx/21" 
+      xmlns:fx="http://javafx.com/fxml/1" 
+      fx:controller="com.hotel.controller.ReservationController">
+   <children>
+      <Label styleClass="title-label" text="Nouvelle Reservation" />
+      
+      <VBox spacing="10.0" maxWidth="400.0">
+         <children>
+            <Label styleClass="subtitle-label" text="Informations Client" />
+            <ComboBox fx:id="cmbClient" maxWidth="Infinity" promptText="Choisir un client" styleClass="combo-box" />
+            
+            <Separator />
+            
+            <Label styleClass="subtitle-label" text="Dates de Séjour" />
+            <GridPane hgap="10" vgap="10">
+               <columnConstraints>
+                  <ColumnConstraints minWidth="100.0" />
+                  <ColumnConstraints hgrow="ALWAYS" />
+               </columnConstraints>
+               <children>
+                  <Label text="Arrivée :" GridPane.rowIndex="0" GridPane.columnIndex="0" />
+                  <DatePicker fx:id="dateDebutPicker" GridPane.rowIndex="0" GridPane.columnIndex="1" maxWidth="Infinity" />
+                  
+                  <Label text="Départ :" GridPane.rowIndex="1" GridPane.columnIndex="0" />
+                  <DatePicker fx:id="dateFinPicker" GridPane.rowIndex="1" GridPane.columnIndex="1" maxWidth="Infinity" />
+               </children>
+            </GridPane>
+            
+            <Separator />
+            
+            <Label styleClass="subtitle-label" text="Chambre &amp; Services" />
+            <ComboBox fx:id="cmbChambre" maxWidth="Infinity" promptText="Choisir une chambre" styleClass="combo-box" />
+            
+            <Label text="Options prédéfinies :" styleClass="subtitle-label" />
+            <ListView fx:id="listViewDemandes" prefHeight="80.0" styleClass="list-view" />
+            
+            <Label text="Notes / Demandes manuelles :" styleClass="subtitle-label" />
+            <TextArea fx:id="txtNotes" prefHeight="80.0" promptText="Saisir ici d'autres demandes..." styleClass="text-area" />
+         </children>
+      </VBox>
+      
+      <HBox alignment="CENTER" spacing="20.0">
+         <children>
+            <Button onAction="#validerReservation" styleClass="button, button-primary" text="Valider Reservation" minWidth="180.0" />
+            <Button onAction="#ouvrirGestionReservations" styleClass="button, button-secondary" text="Liste des Reservations" />
+         </children>
+      </HBox>
+   </children>
+   <padding>
+      <Insets bottom="30.0" left="30.0" right="30.0" top="30.0" />
+   </padding>
+</VBox>

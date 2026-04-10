@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.canvas.*?>
+<?import javafx.scene.text.*?>
+<?import javafx.geometry.*?>
+
+<ScrollPane fitToWidth="true" stylesheets="@styles.css"
+            xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.hotel.controller.DashboardController">
+
+    <VBox spacing="20" style="-fx-padding: 24; -fx-background-color: #F0F2F8;">
+
+        <!-- ══ En-tête ══════════════════════════════════════════════════════ -->
+        <HBox alignment="CENTER_LEFT" spacing="12">
+            <Label text="📊  Tableau de Bord" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #3A0CA3;"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label fx:id="lblDerniereMaj" text="— mise à jour : —"
+                   style="-fx-text-fill: #94A3B8; -fx-font-size: 12px; -fx-font-style: italic;"/>
+            <Button fx:id="btnActualiser" text="🔄  Actualiser"
+                    onAction="#actualiser" styleClass="button-secondary"
+                    style="-fx-padding: 7 14; -fx-background-radius: 8; -fx-font-weight: bold;"/>
+        </HBox>
+
+        <!-- ══ 4 cartes KPI ══════════════════════════════════════════════════ -->
+        <HBox spacing="16">
+            <!-- Réservations actives -->
+            <VBox styleClass="kpi-card,kpi-card-blue" HBox.hgrow="ALWAYS" maxWidth="1.7976931348623157E308">
+                <Label text="🏨  Réservations actives" styleClass="kpi-label"/>
+                <Label fx:id="kpiReservations" text="—" styleClass="kpi-value"/>
+                <Label fx:id="kpiReservationsTotal" text="— réservations au total" styleClass="kpi-sub"/>
+            </VBox>
+            <!-- Revenus -->
+            <VBox styleClass="kpi-card,kpi-card-green" HBox.hgrow="ALWAYS" maxWidth="1.7976931348623157E308">
+                <Label text="💰  Revenus encaissés" styleClass="kpi-label"/>
+                <Label fx:id="kpiRevenus" text="—" styleClass="kpi-value"/>
+                <Label text="Factures payées" styleClass="kpi-sub"/>
+            </VBox>
+            <!-- Taux d'occupation -->
+            <VBox styleClass="kpi-card,kpi-card-orange" HBox.hgrow="ALWAYS" maxWidth="1.7976931348623157E308">
+                <Label text="📈  Taux d'occupation" styleClass="kpi-label"/>
+                <Label fx:id="kpiTauxOccupation" text="—" styleClass="kpi-value"/>
+                <Label fx:id="kpiChambres" text="— / — chambres" styleClass="kpi-sub"/>
+            </VBox>
+            <!-- Satisfaction -->
+            <VBox styleClass="kpi-card,kpi-card-purple" HBox.hgrow="ALWAYS" maxWidth="1.7976931348623157E308">
+                <Label text="⭐  Satisfaction clients" styleClass="kpi-label"/>
+                <Label fx:id="kpiSatisfaction" text="—" styleClass="kpi-value"/>
+                <Label fx:id="kpiNombreAvis" text="— avis" styleClass="kpi-sub"/>
+            </VBox>
+        </HBox>
+
+        <!-- ══ Graphique + Boutons Export ══════════════════════════════════ -->
+        <HBox spacing="16" alignment="TOP_LEFT">
+
+            <!-- Graphique revenus mensuels -->
+            <VBox styleClass="card-panel" HBox.hgrow="ALWAYS" spacing="10">
+                <HBox alignment="CENTER_LEFT" spacing="10">
+                    <Label text="📊  Revenus mensuels" style="-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #3A0CA3;"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <ComboBox fx:id="cbAnnee" onAction="#changerAnnee"
+                              style="-fx-pref-width: 100px;"/>
+                </HBox>
+                <Canvas fx:id="canvasChart" width="580" height="220"/>
+                <!-- Légende mois -->
+                <HBox fx:id="legendeMois" spacing="0" alignment="CENTER"/>
+            </VBox>
+
+            <!-- Panneau actions export -->
+            <VBox styleClass="card-panel" spacing="14" minWidth="200" maxWidth="220">
+                <Label text="📁  Rapports" style="-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #3A0CA3;"/>
+                <Separator/>
+                <VBox spacing="10">
+                    <Button fx:id="btnExportPDF" text="📄  Export PDF"
+                            onAction="#exporterPDF"
+                            styleClass="button-primary"
+                            maxWidth="1.7976931348623157E308"
+                            style="-fx-padding: 10 16;"/>
+                    <Button fx:id="btnExportExcel" text="📊  Export Excel (CSV)"
+                            onAction="#exporterExcel"
+                            styleClass="button-success"
+                            maxWidth="1.7976931348623157E308"
+                            style="-fx-padding: 10 16;"/>
+                </VBox>
+                <Separator/>
+                <Label text="Statistiques" style="-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #64748B;"/>
+                <VBox spacing="6" style="-fx-padding: 0 0 0 4;">
+                    <Label fx:id="statReservTotal" text="Réservations : —" styleClass="stat-line"/>
+                    <Label fx:id="statRevenus"     text="Revenus : —"       styleClass="stat-line"/>
+                    <Label fx:id="statOccupation"  text="Occupation : —"    styleClass="stat-line"/>
+                    <Label fx:id="statSatisf"      text="Satisfaction : —"  styleClass="stat-line"/>
+                </VBox>
+            </VBox>
+        </HBox>
+
+        <!-- ══ Tableau réservations récentes ════════════════════════════════ -->
+        <VBox styleClass="card-panel" spacing="12">
+            <Label text="🕐  Dernières réservations" style="-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #3A0CA3;"/>
+            <TableView fx:id="tableReservations" prefHeight="260"
+                       style="-fx-pref-width: 10000;">
+                <columns>
+                    <TableColumn fx:id="colId"       text="N°"        prefWidth="60"/>
+                    <TableColumn fx:id="colClient"   text="Client"    prefWidth="160"/>
+                    <TableColumn fx:id="colChambre"  text="Chambre"   prefWidth="160"/>
+                    <TableColumn fx:id="colDebut"    text="Arrivée"   prefWidth="110"/>
+                    <TableColumn fx:id="colFin"      text="Départ"    prefWidth="110"/>
+                    <TableColumn fx:id="colStatut"   text="Statut"    prefWidth="120"/>
+                </columns>
+                <placeholder>
+                    <Label text="Aucune réservation récente." style="-fx-text-fill: #94A3B8;"/>
+                </placeholder>
+            </TableView>
+        </VBox>
+
+    </VBox>
+</ScrollPane>

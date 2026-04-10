@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.*?>
+
+<VBox spacing="16"
+      xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.hotel.controller.FormulaireClientController"
+      styleClass="root, card-panel"
+      stylesheets="@styles.css"
+      style="-fx-pref-width: 440px;">
+
+    <Label fx:id="lblTitreFormulaire" text="Nouveau client" styleClass="title-label"/>
+    <Separator/>
+
+    <GridPane hgap="14" vgap="12">
+        <Label text="Nom *" GridPane.rowIndex="0" GridPane.columnIndex="0" style="-fx-font-weight: bold;"/>
+        <TextField fx:id="txtNom" promptText="Nom de famille" GridPane.rowIndex="0" GridPane.columnIndex="1" styleClass="text-field" style="-fx-pref-width: 260px;"/>
+
+        <Label text="Prénom *" GridPane.rowIndex="1" GridPane.columnIndex="0" style="-fx-font-weight: bold;"/>
+        <TextField fx:id="txtPrenom" promptText="Prénom" GridPane.rowIndex="1" GridPane.columnIndex="1" styleClass="text-field"/>
+
+        <Label text="Téléphone" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+        <TextField fx:id="txtTelephone" promptText="Ex : 70 00 00 00" GridPane.rowIndex="2" GridPane.columnIndex="1" styleClass="text-field"/>
+
+        <Label text="Email" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+        <TextField fx:id="txtEmail" promptText="exemple@mail.com" GridPane.rowIndex="3" GridPane.columnIndex="1" styleClass="text-field"/>
+
+        <Label text="Adresse" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+        <TextField fx:id="txtAdresse" promptText="Ville, quartier…" GridPane.rowIndex="4" GridPane.columnIndex="1" styleClass="text-field"/>
+
+        <Label text="N° Fidélité" GridPane.rowIndex="5" GridPane.columnIndex="0"/>
+        <TextField fx:id="txtCarteFidelite" promptText="Ex : FID004" GridPane.rowIndex="5" GridPane.columnIndex="1" styleClass="text-field"/>
+
+    </GridPane>
+
+    <Label fx:id="lblErreur" text="" styleClass="error-label" visible="false" managed="false"/>
+
+    <Separator/>
+
+    <HBox spacing="12" alignment="CENTER_RIGHT">
+        <Button text="Annuler" onAction="#annuler" styleClass="button, button-secondary"/>
+        <Button fx:id="btnEnregistrer" text="Enregistrer" onAction="#enregistrer" styleClass="button, button-primary"/>
+    </HBox>
+
+</VBox>

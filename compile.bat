@@ -1,0 +1,1 @@
+javac -d bin -cp "lib\mysql-connector-j-8.0.32.jar" --module-path "E:\COURS\COURS L2\JAVA\RESSOURCES_DE_JAVA\openjfx-21.0.9_windows-x64_bin-sdk\javafx-sdk-21.0.9\lib" --add-modules javafx.controls,javafx.fxml,javafx.graphics,javafx.base @sources.txt

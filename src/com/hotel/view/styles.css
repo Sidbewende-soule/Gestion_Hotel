@@ -1,0 +1,250 @@
+/* Modern JavaFX Styling for Hotel Management App */
+
+.root {
+    -fx-font-family: "Segoe UI", "Inter", sans-serif;
+    -fx-background-color: #F8F9FA;
+    -fx-text-fill: #2B2D42;
+    -fx-font-size: 14px;
+}
+
+/* Titles */
+.title-label {
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #3A0CA3;
+    -fx-padding: 10 0 15 0;
+}
+
+.subtitle-label {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #4361EE;
+}
+
+/* Text Fields and Areas */
+.text-field,
+.text-area,
+.combo-box {
+    -fx-background-color: #FFFFFF;
+    -fx-background-radius: 6px;
+    -fx-border-color: #D1D5DB;
+    -fx-border-radius: 6px;
+    -fx-padding: 6px 10px;
+    -fx-prompt-text-fill: #9CA3AF;
+}
+
+.text-field:focused,
+.text-area:focused,
+.combo-box:focused {
+    -fx-border-color: #4361EE;
+    -fx-effect: dropshadow(three-pass-box, rgba(67, 97, 238, 0.3), 5, 0, 0, 0);
+}
+
+/* Buttons */
+.button {
+    -fx-background-radius: 6px;
+    -fx-padding: 8px 16px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+    -fx-text-fill: #FFFFFF;
+}
+
+.button-primary {
+    -fx-background-color: #4361EE;
+    -fx-border-color: transparent;
+}
+
+.button-primary:hover {
+    -fx-background-color: #3F37C9;
+}
+
+.button-secondary {
+    -fx-background-color: #E2E8F0;
+    -fx-text-fill: #475569;
+}
+
+.button-secondary:hover {
+    -fx-background-color: #CBD5E1;
+}
+
+.button-success {
+    -fx-background-color: #10B981;
+}
+
+.button-success:hover {
+    -fx-background-color: #059669;
+}
+
+.button-warning {
+    -fx-background-color: #F59E0B;
+}
+
+.button-warning:hover {
+    -fx-background-color: #D97706;
+}
+
+.button-danger {
+    -fx-background-color: #EF4444;
+}
+
+.button-danger:hover {
+    -fx-background-color: #DC2626;
+}
+
+.button-icon {
+    -fx-background-color: transparent;
+    -fx-text-fill: #475569;
+    -fx-padding: 4px;
+    -fx-background-radius: 4px;
+}
+
+.button-icon:hover {
+    -fx-background-color: #E2E8F0;
+}
+
+/* Table View */
+.table-view {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #E5E7EB;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.05), 10, 0, 0, 4);
+}
+
+.table-view .column-header {
+    -fx-background-color: #F1F5F9;
+    -fx-border-color: transparent transparent #E5E7EB transparent;
+    -fx-padding: 10px 5px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #475569;
+}
+
+.table-view .table-cell {
+    -fx-padding: 8px 5px;
+    -fx-border-color: transparent transparent #F1F5F9 transparent;
+    -fx-alignment: CENTER-LEFT;
+}
+
+.table-row-cell:odd {
+    -fx-background-color: #FAFAFA;
+}
+
+.table-row-cell:even {
+    -fx-background-color: #FFFFFF;
+}
+
+.table-row-cell:selected {
+    -fx-background-color: #EFF6FF;
+    -fx-text-fill: #1E3A8A;
+}
+
+/* Panels */
+.card-panel {
+    -fx-background-color: #FFFFFF;
+    -fx-background-radius: 12px;
+    -fx-border-color: #E5E7EB;
+    -fx-border-radius: 12px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.05), 15, 0, 0, 5);
+    -fx-padding: 20px;
+}
+
+/* List View */
+.list-view {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+.list-view .list-cell {
+    -fx-padding: 10px;
+    -fx-background-color: #F8FAFC;
+    -fx-border-color: #E2E8F0;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-margin: 5px 0px;
+}
+
+.list-view .list-cell:empty {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+/* Status Bar */
+.status-bar {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #E5E7EB transparent transparent transparent;
+    -fx-padding: 10px 15px;
+}
+
+.error-label {
+    -fx-text-fill: #EF4444;
+    -fx-font-style: italic;
+    -fx-font-weight: bold;
+}
+
+/* ══════════════════════════════════════════════════
+   DASHBOARD — KPI Cards
+   ══════════════════════════════════════════════════ */
+
+.kpi-card {
+    -fx-background-radius: 14px;
+    -fx-border-radius: 14px;
+    -fx-padding: 20px 22px 18px 22px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.10), 12, 0, 0, 4);
+    -fx-spacing: 6;
+}
+
+/* Variantes colorées */
+.kpi-card-blue {
+    -fx-background-color: linear-gradient(to bottom right, #4361EE, #3A0CA3);
+}
+
+.kpi-card-green {
+    -fx-background-color: linear-gradient(to bottom right, #10B981, #047857);
+}
+
+.kpi-card-orange {
+    -fx-background-color: linear-gradient(to bottom right, #F59E0B, #B45309);
+}
+
+.kpi-card-purple {
+    -fx-background-color: linear-gradient(to bottom right, #7C3AED, #4C1D95);
+}
+
+/* Textes dans les KPI cards */
+.kpi-label {
+    -fx-text-fill: rgba(255,255,255,0.80);
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+}
+
+.kpi-value {
+    -fx-text-fill: #FFFFFF;
+    -fx-font-size: 30px;
+    -fx-font-weight: bold;
+}
+
+.kpi-sub {
+    -fx-text-fill: rgba(255,255,255,0.65);
+    -fx-font-size: 11px;
+}
+
+/* ══════════════════════════════════════════════════
+   DASHBOARD — Résumé stats (panneau export)
+   ══════════════════════════════════════════════════ */
+
+.stat-line {
+    -fx-text-fill: #475569;
+    -fx-font-size: 12px;
+}
+
+/* ══════════════════════════════════════════════════
+   DASHBOARD — ScrollPane transparent
+   ══════════════════════════════════════════════════ */
+
+.scroll-pane {
+    -fx-background-color: transparent;
+}
+
+.scroll-pane > .viewport {
+    -fx-background-color: transparent;
+}
